@@ -1,7 +1,7 @@
 class LoginActivity {
   final int id;
   final int uId;
-  final int actType;
+  final String actType;
   final DateTime time;
   final int status;
 

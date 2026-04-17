@@ -25,22 +25,24 @@ if ($result->num_rows > 0) {
     $update_stmt->execute();
 
     // Insert into login_activity
-    $act_type = 1; // 1 for Login
+    $act_type = 'login'; // Changed to String
     $status = 1; // 1 for Success
     $now = date('Y-m-d H:i:s');
     $log_stmt = $conn->prepare("INSERT INTO login_activity (u_id, act_type, time, status) VALUES (?, ?, ?, ?)");
-    $log_stmt->bind_param("iisi", $mobile_no, $act_type, $now, $status);
+    $log_stmt->bind_param("issi", $mobile_no, $act_type, $now, $status);
     $log_stmt->execute();
+    $log_stmt->close();
 
     echo json_encode(["success" => true, "message" => "OTP verified and activity logged"]);
 } else {
-    // Optional: Log failed attempt
-    $act_type = 1;
+    // Log failed attempt
+    $act_type = 'login';
     $status = 0; // 0 for Failure
     $now = date('Y-m-d H:i:s');
     $log_stmt = $conn->prepare("INSERT INTO login_activity (u_id, act_type, time, status) VALUES (?, ?, ?, ?)");
-    $log_stmt->bind_param("iisi", $mobile_no, $act_type, $now, $status);
+    $log_stmt->bind_param("issi", $mobile_no, $act_type, $now, $status);
     $log_stmt->execute();
+    $log_stmt->close();
 
     echo json_encode(["success" => false, "message" => "Invalid or expired OTP"]);
 }
