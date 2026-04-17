@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home_page.dart';
+import 'dashboard_page.dart';
 import 'services/api_service.dart';
 
 class OTPVerificationPage extends StatefulWidget {
@@ -34,7 +34,7 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
           if (mounted) {
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(
-                builder: (context) => const MyHomePage(title: 'HOME'),
+                builder: (context) => DashboardPage(phoneNumber: widget.phoneNumber),
               ),
               (route) => false,
             );
