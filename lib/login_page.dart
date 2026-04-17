@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'otp_verification_page.dart';
-import 'database/database_helper.dart';
-import 'models/partner.dart';
+import 'services/api_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,7 +11,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _phoneController = TextEditingController();
-  final DatabaseHelper _dbHelper = DatabaseHelper();
+  final ApiService _apiService = ApiService();
   bool _isLoading = false;
 
   Future<void> _handleLogin() async {
@@ -29,13 +28,10 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      // Basic validation: check if it's a number
       final mobileNo = int.tryParse(phoneStr.replaceAll(RegExp(r'\D'), ''));
-      if (mobileNo == null) {
-        throw Exception('INVALID MOBILE NUMBER');
-      }
+      if (mobileNo == null) throw Exception('INVALID MOBILE NUMBER');
 
-      final partner = await _dbHelper.getPartner(mobileNo);
+      final partner = await _apiService.getPartner(mobileNo);
 
       if (partner != null) {
         if (mounted) {
@@ -46,19 +42,16 @@ class _LoginPageState extends State<LoginPage> {
           );
         }
       } else {
-        // If partner doesn't exist, we might want to register them or show error
-        // For now, let's show an error or provide a way to "Register" (seed data)
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('PARTNER NOT FOUND. PLEASE REGISTER.')),
+            const SnackBar(content: Text('PARTNER NOT FOUND IN DATABASE')),
           );
-          // Optional: navigate to registration
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ERROR: ${e.toString()}')),
+          SnackBar(content: Text('CONNECTION ERROR: MAKE SURE XAMPP IS RUNNING')),
         );
       }
     } finally {
