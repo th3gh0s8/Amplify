@@ -86,16 +86,16 @@ class _LoginPageState extends State<LoginPage> {
               'WELCOME',
               style: TextStyle(
                 fontSize: 32,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 4,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -1,
               ),
             ),
             const SizedBox(height: 8),
             const Text(
-              'PLEASE ENTER YOUR MOBILE NUMBER TO CONTINUE',
+              'Enter your mobile number to continue',
               style: TextStyle(
-                fontSize: 12,
-                letterSpacing: 1.2,
+                fontSize: 14,
+                color: Colors.black54,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -118,13 +118,7 @@ class _LoginPageState extends State<LoginPage> {
                       width: 20,
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                     )
-                  : const Text(
-                      'GET OTP',
-                      style: TextStyle(
-                        letterSpacing: 2,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  : const Text('GET OTP'),
             ),
             const SizedBox(height: 16),
             const Center(
