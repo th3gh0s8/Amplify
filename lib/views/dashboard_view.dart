@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/partner.dart';
 import '../services/api_service.dart';
 
 class DashboardView extends StatefulWidget {
@@ -13,6 +14,7 @@ class _DashboardViewState extends State<DashboardView> {
   final ApiService _apiService = ApiService();
   Map<String, dynamic>? _dashboardData;
   List<dynamic> _recentInvoices = [];
+  Partner? _partner;
   bool _isLoading = true;
 
   @override
@@ -23,13 +25,19 @@ class _DashboardViewState extends State<DashboardView> {
 
   Future<void> _loadData() async {
     final mobileNo = widget.phoneNumber;
-    final data = await _apiService.getDashboardData(mobileNo);
-    final invoices = await _apiService.getInvoices(mobileNo);
-    setState(() {
-      _dashboardData = data;
-      _recentInvoices = invoices;
-      _isLoading = false;
-    });
+    try {
+      final data = await _apiService.getDashboardData(mobileNo);
+      final invoices = await _apiService.getInvoices(mobileNo);
+      final partner = await _apiService.getPartner(mobileNo);
+      setState(() {
+        _dashboardData = data;
+        _recentInvoices = invoices;
+        _partner = partner;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
   }
 
   String _calculateLevel(int customers) {
@@ -86,7 +94,7 @@ class _DashboardViewState extends State<DashboardView> {
         ),
         const SizedBox(height: 4),
         Text(
-          widget.phoneNumber,
+          _partner != null ? '${_partner!.firstName} ${_partner!.lastName}'.toUpperCase() : widget.phoneNumber,
           style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1),
         ),
       ],
