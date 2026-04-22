@@ -40,6 +40,14 @@ class _DashboardViewState extends State<DashboardView> {
     return 'ASSOCIATE';
   }
 
+  List<Color> _getLevelColors(String level) {
+    switch (level) {
+      case 'MASTER': return [const Color(0xFFC62828), const Color(0xFF8E0000)]; // Ruby
+      case 'ADVISOR': return [const Color(0xFF2E7D32), const Color(0xFF1B5E20)]; // Emerald
+      default: return [const Color(0xFF9C27B0), const Color(0xFF6A1B9A)]; // Amethyst
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) return const Center(child: CircularProgressIndicator(color: Colors.black));
@@ -89,6 +97,7 @@ class _DashboardViewState extends State<DashboardView> {
 
   Widget _buildStatsGrid() {
     int totalInvoices = int.tryParse(_dashboardData?['total_invoices']?.toString() ?? '0') ?? 0;
+    String currentLevel = _calculateLevel(totalInvoices);
     
     return GridView.count(
       shrinkWrap: true,
@@ -112,8 +121,8 @@ class _DashboardViewState extends State<DashboardView> {
         ),
         _buildStatCard(
           'STATUS', 
-          _calculateLevel(totalInvoices),
-          [const Color(0xFF757575), const Color(0xFF424242)],
+          currentLevel,
+          _getLevelColors(currentLevel),
           Colors.white,
         ),
         _buildStatCard(
@@ -154,7 +163,7 @@ class _DashboardViewState extends State<DashboardView> {
                 height: 12,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF607D8B), Color(0xFF455A64), Color(0xFF212121)],
+                    colors: [Color(0xFF9C27B0), Color(0xFF2E7D32), Color(0xFFC62828)],
                     stops: [0.0, 0.4, 1.0],
                   ),
                   borderRadius: BorderRadius.circular(6),
@@ -170,9 +179,9 @@ class _DashboardViewState extends State<DashboardView> {
         const Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _LevelMarker(label: 'ASSOCIATE', color: Color(0xFF90A4AE)),
-            _LevelMarker(label: 'ADVISOR', color: Color(0xFF455A64)),
-            _LevelMarker(label: 'MASTER', color: Color(0xFF212121)),
+            _LevelMarker(label: 'ASSOCIATE', color: Color(0xFF9C27B0)),
+            _LevelMarker(label: 'ADVISOR', color: Color(0xFF2E7D32)),
+            _LevelMarker(label: 'MASTER', color: Color(0xFFC62828)),
           ],
         ),
       ],
