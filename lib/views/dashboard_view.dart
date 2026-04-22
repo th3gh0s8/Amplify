@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/partner.dart';
 import '../services/api_service.dart';
+import 'level_benefits_page.dart';
 
 class DashboardView extends StatefulWidget {
   final String phoneNumber;
@@ -116,13 +117,13 @@ class _DashboardViewState extends State<DashboardView> {
         _buildStatCard(
           'TOTAL EARNED', 
           'LKR ${_dashboardData?['total_earned'] ?? '0.00'}',
-          [const Color(0xFF424242), const Color(0xFF212121)],
+          [const Color(0xFF212121), Colors.black],
           Colors.white,
         ),
         _buildStatCard(
           'PENDING', 
           'LKR ${_dashboardData?['pending_payouts'] ?? '0.00'}',
-          [const Color(0xFF757575), const Color(0xFF424242)],
+          [const Color(0xFF424242), const Color(0xFF212121)],
           Colors.white,
         ),
         _buildStatCard(
@@ -134,7 +135,7 @@ class _DashboardViewState extends State<DashboardView> {
         _buildStatCard(
           'TOTAL INVOICES',
           '$totalInvoices',
-          [const Color(0xFF424242), const Color(0xFF212121)],
+          [const Color(0xFF212121), Colors.black],
           Colors.white,
         ),
       ],
@@ -148,9 +149,21 @@ class _DashboardViewState extends State<DashboardView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'PARTNER GROWTH',
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.black38),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'PARTNER GROWTH',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.black38),
+            ),
+            GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const LevelBenefitsPage())),
+              child: const Text(
+                'VIEW DETAILS',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1, color: Colors.black),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         Stack(
