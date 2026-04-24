@@ -38,6 +38,7 @@ class _InvoicesViewState extends State<InvoicesView> {
       onRefresh: _fetchInvoices,
       color: Colors.black,
       child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
