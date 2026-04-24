@@ -71,11 +71,6 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
     setState(() => _isLoading = true);
 
     try {
-      // Note: We need the partner ID. For now we use 0 or fetch it from API if available.
-      // In a real scenario, we should have the partner ID from the dashboard data.
-      final dashboardData = await _apiService.getDashboardData(widget.phoneNumber);
-      final partnerId = int.tryParse(dashboardData?['partner_id']?.toString() ?? '0') ?? 0;
-
       // Clean numbers: remove all non-digits AND leading zero
       String cleanComNumber = _comNumberController.text.replaceAll(RegExp(r'\D'), '');
       if (cleanComNumber.startsWith('0')) cleanComNumber = cleanComNumber.substring(1);
@@ -84,7 +79,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
       if (cleanAdminNumber.startsWith('0')) cleanAdminNumber = cleanAdminNumber.substring(1);
 
       final customer = Customer(
-        partnerId: partnerId,
+        partnerId: 0, // We will use the mobile number instead in the API call
         companyName: _comNameController.text,
         companyAddress: _comAddressController.text,
         companyNumber: cleanComNumber,
@@ -96,14 +91,15 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
         additionalFeatures: _featuresController.text,
       );
 
-      final success = await _apiService.addCustomer(customer, _paymentSlip!);
+      // Pass the phone number directly to the API service
+      final success = await _apiService.addCustomer(customer, _paymentSlip!, partnerMobile: widget.phoneNumber);
 
       if (success) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('CUSTOMER REGISTERED SUCCESSFULLY')),
           );
-          Navigator.pop(context);
+          Navigator.pop(context, true); // Return true to indicate success
         }
       } else {
         throw Exception('FAILED TO REGISTER CUSTOMER');

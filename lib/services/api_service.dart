@@ -187,13 +187,13 @@ class ApiService {
     }
   }
 
-  Future<bool> addCustomer(Customer customer, File paymentSlip) async {
+  Future<bool> addCustomer(Customer customer, File paymentSlip, {required String partnerMobile}) async {
     try {
       var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/add_customer.php'));
       
       // Add text fields
       request.fields.addAll({
-        'partnerTb': customer.partnerId.toString(),
+        'partnerTb': partnerMobile, // Send the mobile number directly
         'com_name': customer.companyName,
         'com_address': customer.companyAddress,
         'com_number': customer.companyNumber,

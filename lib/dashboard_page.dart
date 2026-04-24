@@ -15,6 +15,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   int _selectedIndex = 0;
+  Key _dashboardKey = UniqueKey();
 
   void _onItemTapped(int index) {
     setState(() {
@@ -29,7 +30,7 @@ class _DashboardPageState extends State<DashboardPage> {
         child: IndexedStack(
           index: _selectedIndex,
           children: [
-            DashboardView(phoneNumber: widget.phoneNumber),
+            DashboardView(key: _dashboardKey, phoneNumber: widget.phoneNumber),
             InvoicesView(phoneNumber: widget.phoneNumber),
             PayoutsView(phoneNumber: widget.phoneNumber),
             ProfileView(phoneNumber: widget.phoneNumber),
@@ -37,10 +38,20 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => AddCustomerPage(phoneNumber: widget.phoneNumber)),
-        ),
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddCustomerPage(phoneNumber: widget.phoneNumber)),
+          );
+          
+          if (result == true) {
+            // Force recreation of DashboardView by changing its key
+            setState(() {
+              _selectedIndex = 0;
+              _dashboardKey = UniqueKey();
+            });
+          }
+        },
         backgroundColor: Colors.black,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 28),

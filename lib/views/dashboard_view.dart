@@ -63,6 +63,7 @@ class _DashboardViewState extends State<DashboardView> {
       onRefresh: _loadData,
       color: Colors.black,
       child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,8 +110,8 @@ class _DashboardViewState extends State<DashboardView> {
   }
 
   Widget _buildStatsGrid() {
-    int totalInvoices = int.tryParse(_dashboardData?['total_invoices']?.toString() ?? '0') ?? 0;
-    String currentLevel = _calculateLevel(totalInvoices);
+    int totalCustomers = int.tryParse(_dashboardData?['total_customers']?.toString() ?? '0') ?? 0;
+    String currentLevel = _calculateLevel(totalCustomers);
     
     return GridView.count(
       shrinkWrap: true,
@@ -139,8 +140,8 @@ class _DashboardViewState extends State<DashboardView> {
           Colors.white,
         ),
         _buildStatCard(
-          'TOTAL INVOICES',
-          '$totalInvoices',
+          'CUSTOMERS',
+          '${_dashboardData?['total_customers'] ?? '0'}',
           [const Color(0xFF212121), Colors.black],
           Colors.white,
         ),
@@ -149,8 +150,10 @@ class _DashboardViewState extends State<DashboardView> {
   }
 
   Widget _buildLevelProgress() {
-    int totalInvoices = int.tryParse(_dashboardData?['total_invoices']?.toString() ?? '0') ?? 0;
-    double progress = (totalInvoices / 250).clamp(0.0, 1.0); 
+    int totalCustomers = int.tryParse(_dashboardData?['total_customers']?.toString() ?? '0') ?? 0;
+    double progress = (totalCustomers / 250).clamp(0.0, 1.0); 
+    String currentLevel = _calculateLevel(totalCustomers);
+    List<Color> levelColors = _getLevelColors(currentLevel);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,13 +190,12 @@ class _DashboardViewState extends State<DashboardView> {
               child: Container(
                 height: 12,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF9C27B0), Color(0xFF2E7D32), Color(0xFFC62828)],
-                    stops: [0.0, 0.4, 1.0],
+                  gradient: LinearGradient(
+                    colors: levelColors,
                   ),
                   borderRadius: BorderRadius.circular(6),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))
+                    BoxShadow(color: levelColors[0].withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))
                   ]
                 ),
               ),
