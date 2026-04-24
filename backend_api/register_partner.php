@@ -38,6 +38,12 @@ if ($stmt->execute()) {
     $log_stmt->execute();
     $log_stmt->close();
 
+    // EXPIRE PREVIOUS CODES (if any)
+    $expire_stmt = $conn->prepare("UPDATE web_codes SET status = 1 WHERE u_Id = ? AND status = 0");
+    $expire_stmt->bind_param("s", $mobile_no);
+    $expire_stmt->execute();
+    $expire_stmt->close();
+
     // Generate a random 4-digit OTP for the new user
     $otp = rand(1000, 9999);
     $otp_stmt = $conn->prepare("INSERT INTO web_codes (u_Id, otp_code, time, status) VALUES (?, ?, ?, 0)");

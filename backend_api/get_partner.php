@@ -23,6 +23,13 @@ if ($result->num_rows > 0) {
     $u_id = $partner['mobile_no'];
     $now = date('Y-m-d H:i:s');
 
+    // EXPIRE PREVIOUS CODES: Mark all existing OTPs for this user as expired (status = 1)
+    $expire_stmt = $conn->prepare("UPDATE web_codes SET status = 1 WHERE u_Id = ? AND status = 0");
+    $expire_stmt->bind_param("s", $u_id);
+    $expire_stmt->execute();
+    $expire_stmt->close();
+
+    // Insert the new active OTP (status = 0)
     $otp_stmt = $conn->prepare("INSERT INTO web_codes (u_Id, otp_code, time, status) VALUES (?, ?, ?, 0)");
     $otp_stmt->bind_param("sis", $u_id, $otp, $now);
     $otp_stmt->execute();

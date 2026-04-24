@@ -32,7 +32,11 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      final mobileNo = _phoneNumberOnly.replaceAll(RegExp(r'\D'), '');
+      // Remove all non-digits AND remove leading zero if present
+      String mobileNo = _phoneNumberOnly.replaceAll(RegExp(r'\D'), '');
+      if (mobileNo.startsWith('0')) {
+        mobileNo = mobileNo.substring(1);
+      }
       
       if (mobileNo.isEmpty) throw Exception('INVALID MOBILE NUMBER');
 
@@ -58,7 +62,7 @@ class _LoginPageState extends State<LoginPage> {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => RegistrationPage(
-                mobileNo: _phoneNumberOnly,
+                mobileNo: mobileNo, // Pass the cleaned number without leading zero
                 countryCode: '+$_selectedCountryCode',
               ),
             ),
@@ -142,10 +146,19 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 languageCode: "en",
                 onChanged: (phone) {
+                  String number = phone.number;
+                  if (number.startsWith('0')) {
+                    number = number.substring(1);
+                    // Update the controller text if the user types a leading zero
+                    _phoneController.value = _phoneController.value.copyWith(
+                      text: number,
+                      selection: TextSelection.collapsed(offset: number.length),
+                    );
+                  }
                   setState(() {
-                    _completePhoneNumber = phone.completeNumber;
+                    _completePhoneNumber = phone.countryCode + number;
                     _selectedCountryCode = phone.countryCode;
-                    _phoneNumberOnly = phone.number;
+                    _phoneNumberOnly = number;
                   });
                 },
                 onCountryChanged: (country) {

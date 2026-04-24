@@ -75,13 +75,20 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
       final dashboardData = await _apiService.getDashboardData(widget.phoneNumber);
       final partnerId = int.tryParse(dashboardData?['partner_id']?.toString() ?? '0') ?? 0;
 
+      // Clean numbers: remove all non-digits AND leading zero
+      String cleanComNumber = _comNumberController.text.replaceAll(RegExp(r'\D'), '');
+      if (cleanComNumber.startsWith('0')) cleanComNumber = cleanComNumber.substring(1);
+
+      String cleanAdminNumber = _adminNumberController.text.replaceAll(RegExp(r'\D'), '');
+      if (cleanAdminNumber.startsWith('0')) cleanAdminNumber = cleanAdminNumber.substring(1);
+
       final customer = Customer(
         partnerId: partnerId,
         companyName: _comNameController.text,
         companyAddress: _comAddressController.text,
-        companyNumber: _comNumberController.text,
+        companyNumber: cleanComNumber,
         adminName: _adminNameController.text,
-        adminNumber: _adminNumberController.text,
+        adminNumber: cleanAdminNumber,
         companyArea: _comAreaController.text,
         companyField: _comFieldController.text,
         remarks: _remarksController.text,
@@ -191,6 +198,15 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
       maxLines: maxLines,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+      onChanged: isNumber ? (value) {
+        if (value.startsWith('0')) {
+          String cleanValue = value.substring(1);
+          controller.value = controller.value.copyWith(
+            text: cleanValue,
+            selection: TextSelection.collapsed(offset: cleanValue.length),
+          );
+        }
+      } : null,
       decoration: InputDecoration(
         labelText: isOptional ? '$label (OPTIONAL)' : label,
         labelStyle: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),

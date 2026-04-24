@@ -1,17 +1,10 @@
 <?php
 header('Content-Type: application/json');
 
-// Database configuration
-$host = 'localhost';
-$user = 'root';
-$pass = '';
-$db   = 'xpower_partners'; // UPDATED: Changed from 'xpower_partners_db' to 'xpower_partners'
+// Use existing database configuration
+require_once 'db_config.php';
 
-$conn = new mysqli($host, $user, $pass, $db);
-
-if ($conn->connect_error) {
-    die(json_encode(['success' => false, 'message' => 'Database connection failed']));
-}
+// The $conn variable is now available from db_config.php
 
 // Ensure uploads directory exists
 $uploadDir = 'uploads/payment_slips/';
@@ -36,8 +29,9 @@ if (isset($_FILES['payment_slip'])) {
         $file_type = (in_array($ext, ['jpg', 'jpeg', 'png'])) ? 'image' : 'pdf';
         $size_kb = round($file['size'] / 1024);
 
-        // Insert into files/slips table first (based on your schema)
-        $stmtFile = $conn->prepare("INSERT INTO payment_slips (file_name, file_type, file_path, size_kb, status) VALUES (?, ?, ?, ?, 'active')");
+        // Match the schema provided: id, file_name, file_type, file_path, size_kb, uploaded_at, thumbnail_url, status
+        // FINAL UPDATE: Table name is 'web_documents'
+        $stmtFile = $conn->prepare("INSERT INTO web_documents (file_name, file_type, file_path, size_kb, status) VALUES (?, ?, ?, ?, 'active')");
         $stmtFile->bind_param("sssi", $file['name'], $file_type, $file_path, $size_kb);
         $stmtFile->execute();
         $slip_id = $conn->insert_id;
@@ -66,7 +60,9 @@ $additional_features = $_POST['additional_features'] ?? '';
 if (empty($remarks)) $remarks = "-";
 if (empty($additional_features)) $additional_features = "-";
 
-$sql = "INSERT INTO customers (partnerTb, com_name, com_address, com_number, admin_name, admin_number, com_area, com_field, remarks, additional_features, status, rDateTime)
+// FINAL UPDATE: Customer table name is 'new_clients'
+// Match the schema provided: id, partnerTb, com_name, com_address, com_number, admin_name, admin_number, com_area, com_field, remarks, additional_features, rDateTime, status
+$sql = "INSERT INTO new_clients (partnerTb, com_name, com_address, com_number, admin_name, admin_number, com_area, com_field, remarks, additional_features, status, rDateTime)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())";
 
 $stmt = $conn->prepare($sql);
