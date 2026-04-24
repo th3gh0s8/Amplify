@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 import '../models/customer.dart';
 import '../services/api_service.dart';
 
@@ -150,7 +151,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                   const SizedBox(height: 16),
                   _buildTextField(_comAddressController, 'COMPANY ADDRESS', Icons.location_on),
                   const SizedBox(height: 16),
-                  _buildTextField(_comNumberController, 'COMPANY NUMBER', Icons.phone, isNumber: true),
+                  _buildPhoneField(_comNumberController, 'COMPANY NUMBER'),
                   const SizedBox(height: 16),
                   _buildTextField(_comAreaController, 'COMPANY AREA', Icons.map),
                   const SizedBox(height: 16),
@@ -161,7 +162,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                   const SizedBox(height: 16),
                   _buildTextField(_adminNameController, 'ADMIN NAME', Icons.person),
                   const SizedBox(height: 16),
-                  _buildTextField(_adminNumberController, 'ADMIN NUMBER', Icons.phone_android, isNumber: true),
+                  _buildPhoneField(_adminNumberController, 'ADMIN NUMBER'),
                   
                   const SizedBox(height: 32),
                   _buildSectionTitle('ADDITIONAL DETAILS'),
@@ -198,15 +199,6 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
       maxLines: maxLines,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
-      onChanged: isNumber ? (value) {
-        if (value.startsWith('0')) {
-          String cleanValue = value.substring(1);
-          controller.value = controller.value.copyWith(
-            text: cleanValue,
-            selection: TextSelection.collapsed(offset: cleanValue.length),
-          );
-        }
-      } : null,
       decoration: InputDecoration(
         labelText: isOptional ? '$label (OPTIONAL)' : label,
         labelStyle: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
@@ -217,9 +209,37 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),
       validator: (value) {
-        if (isOptional) return null;
+        if (isOptional && (value == null || value.isEmpty)) return null;
         return value == null || value.isEmpty ? 'REQUIRED' : null;
       },
+    );
+  }
+
+  Widget _buildPhoneField(TextEditingController controller, String label) {
+    return IntlPhoneField(
+      controller: controller,
+      initialCountryCode: 'LK',
+      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+      onChanged: (phone) {
+        String number = phone.number;
+        if (number.startsWith('0')) {
+          number = number.substring(1);
+          controller.value = controller.value.copyWith(
+            text: number,
+            selection: TextSelection.collapsed(offset: number.length),
+          );
+        }
+      },
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
+        filled: true,
+        fillColor: Colors.black.withOpacity(0.03),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        counterText: '', // Hide default counter
+      ),
+      languageCode: "en",
     );
   }
 

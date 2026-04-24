@@ -95,7 +95,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(labelText: 'EMAIL'),
-                validator: (v) => v!.isEmpty ? 'Required' : null,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Required';
+                  final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                  if (!emailRegex.hasMatch(v)) return 'Invalid email format';
+                  return null;
+                },
               ),
               const SizedBox(height: 32),
               _buildSectionTitle('BANK DETAILS'),

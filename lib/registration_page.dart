@@ -121,7 +121,17 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 const SizedBox(height: 24),
                 _buildField('LAST NAME', _lastNameController),
                 const SizedBox(height: 24),
-                _buildField('EMAIL ADDRESS', _emailController, keyboardType: TextInputType.emailAddress),
+                _buildField(
+                  'EMAIL ADDRESS', 
+                  _emailController, 
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'FIELD REQUIRED';
+                    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                    if (!emailRegex.hasMatch(v)) return 'INVALID EMAIL FORMAT';
+                    return null;
+                  },
+                ),
                 const SizedBox(height: 48),
                 SizedBox(
                   width: double.infinity,
@@ -145,7 +155,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
     );
   }
 
-  Widget _buildField(String label, TextEditingController controller, {TextInputType? keyboardType}) {
+  Widget _buildField(String label, TextEditingController controller, {TextInputType? keyboardType, String? Function(String?)? validator}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -164,7 +174,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
             enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black12)),
             focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2)),
           ),
-          validator: (v) => v!.isEmpty ? 'FIELD REQUIRED' : null,
+          validator: validator ?? (v) => v!.isEmpty ? 'FIELD REQUIRED' : null,
         ),
       ],
     );
