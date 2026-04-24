@@ -3,6 +3,7 @@ import 'views/dashboard_view.dart';
 import 'views/invoices_view.dart';
 import 'views/payouts_view.dart';
 import 'views/profile_view.dart';
+import 'views/add_customer_page.dart';
 
 class DashboardPage extends StatefulWidget {
   final String phoneNumber;
@@ -35,49 +36,61 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => AddCustomerPage(phoneNumber: widget.phoneNumber)),
+        ),
+        backgroundColor: Colors.black,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomNav(),
     );
   }
 
   Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.black.withOpacity(0.05), width: 1)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
+    return BottomAppBar(
+      height: 70,
+      color: Colors.white,
+      notchMargin: 8,
+      padding: EdgeInsets.zero,
+      shape: const CircularNotchedRectangle(),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildNavItem(0, Icons.grid_view_rounded, 'HOME'),
+          _buildNavItem(1, Icons.receipt_long_rounded, 'INVOICES'),
+          const SizedBox(width: 48), // Space for FAB
+          _buildNavItem(2, Icons.account_balance_wallet_rounded, 'PAYOUTS'),
+          _buildNavItem(3, Icons.person_rounded, 'PROFILE'),
         ],
       ),
-      child: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.black.withOpacity(0.3),
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 0.5),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 10, letterSpacing: 0.5),
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Padding(padding: EdgeInsets.only(bottom: 4), child: Icon(Icons.grid_view_rounded, size: 20)), 
-            label: 'HOME'
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData icon, String label) {
+    bool isSelected = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () => _onItemTapped(index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: isSelected ? Colors.black : Colors.black.withOpacity(0.3),
           ),
-          BottomNavigationBarItem(
-            icon: Padding(padding: EdgeInsets.only(bottom: 4), child: Icon(Icons.receipt_long_rounded, size: 20)), 
-            label: 'INVOICES'
-          ),
-          BottomNavigationBarItem(
-            icon: Padding(padding: EdgeInsets.only(bottom: 4), child: Icon(Icons.account_balance_wallet_rounded, size: 20)), 
-            label: 'PAYOUTS'
-          ),
-          BottomNavigationBarItem(
-            icon: Padding(padding: EdgeInsets.only(bottom: 4), child: Icon(Icons.person_rounded, size: 20)), 
-            label: 'PROFILE'
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w800,
+              color: isSelected ? Colors.black : Colors.black.withOpacity(0.3),
+              letterSpacing: 0.5,
+            ),
           ),
         ],
       ),

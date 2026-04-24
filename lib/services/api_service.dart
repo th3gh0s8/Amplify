@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/partner.dart';
 import '../models/invoice.dart';
+import '../models/customer.dart';
 
 class ApiService {
   // IMPORTANT: Replace '192.168.1.100' with your Computer's actual IPv4 Address
@@ -183,5 +185,52 @@ class ApiService {
     } catch (e) {
       return {'success': false, 'message': 'Network Error'};
     }
+  }
+
+  Future<bool> addCustomer(Customer customer, File paymentSlip) async {
+    try {
+      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/add_customer.php'));
+      
+      // Add text fields
+      request.fields.addAll({
+        'partnerTb': customer.partnerId.toString(),
+        'com_name': customer.companyName,
+        'com_address': customer.companyAddress,
+        'com_number': customer.companyNumber,
+        'admin_name': customer.adminName,
+        'admin_number': customer.adminNumber,
+        'com_area': customer.companyArea,
+        'com_field': customer.companyField,
+        'remarks': customer.remarks,
+        'additional_features': customer.additionalFeatures,
+      });
+
+      // Add file
+      request.files.add(await http.MultipartFile.fromPath(
+        'payment_slip',
+        paymentSlip.path,
+      ));
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      print('DEBUG: Add Customer Status Code: ${response.statusCode}');
+      print('DEBUG: Add Customer Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        try {
+          final data = json.decode(response.body);
+          return data['success'] == true;
+        } catch (e) {
+          print('DEBUG: JSON Parsing Error. Server returned: ${response.body}');
+          return false;
+        }
+      } else {
+        print('DEBUG: Server Error Response: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('API Error (Add Customer): $e');
+    }
+    return false;
   }
 }
