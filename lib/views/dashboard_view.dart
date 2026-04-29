@@ -111,7 +111,9 @@ class _DashboardViewState extends State<DashboardView> {
 
   Widget _buildStatsGrid() {
     int totalCustomers = int.tryParse(_dashboardData?['total_customers']?.toString() ?? '0') ?? 0;
-    String currentLevel = _calculateLevel(totalCustomers);
+    // Single Source of Truth: Get Level and Rate from API
+    String apiLevel = _dashboardData?['level']?.toString() ?? 'ASSOCIATE';
+    String commRate = _dashboardData?['commission_rate']?.toString() ?? '10%';
     
     return GridView.count(
       shrinkWrap: true,
@@ -135,13 +137,13 @@ class _DashboardViewState extends State<DashboardView> {
         ),
         _buildStatCard(
           'STATUS', 
-          currentLevel,
-          _getLevelColors(currentLevel),
+          '$apiLevel ($commRate)',
+          _getLevelColors(apiLevel),
           Colors.white,
         ),
         _buildStatCard(
           'CUSTOMERS',
-          '${_dashboardData?['total_customers'] ?? '0'}',
+          '$totalCustomers',
           [const Color(0xFF212121), Colors.black],
           Colors.white,
         ),
@@ -152,8 +154,8 @@ class _DashboardViewState extends State<DashboardView> {
   Widget _buildLevelProgress() {
     int totalCustomers = int.tryParse(_dashboardData?['total_customers']?.toString() ?? '0') ?? 0;
     double progress = (totalCustomers / 250).clamp(0.0, 1.0); 
-    String currentLevel = _calculateLevel(totalCustomers);
-    List<Color> levelColors = _getLevelColors(currentLevel);
+    String apiLevel = _dashboardData?['level']?.toString() ?? 'ASSOCIATE';
+    List<Color> levelColors = _getLevelColors(apiLevel);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -274,35 +276,45 @@ class _DashboardViewState extends State<DashboardView> {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final invoice = _recentInvoices[index];
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (context) => InvoiceDetailsPage(invoice: invoice))
+            ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.black.withOpacity(0.05), width: 1),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.black.withOpacity(0.05), width: 1),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'INV-${invoice.id}', 
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'INV-${invoice.id}', 
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${invoice.date.toString().split(' ')[0]}', 
+                        style: TextStyle(fontSize: 11, color: Colors.black.withOpacity(0.3), fontWeight: FontWeight.w700)
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
                   Text(
-                    '${invoice.date}', 
-                    style: TextStyle(fontSize: 11, color: Colors.black.withOpacity(0.3), fontWeight: FontWeight.w700)
+                    'LKR ${invoice.comAmount}', 
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: -0.5)
                   ),
                 ],
               ),
-              Text(
-                'LKR ${invoice.comAmount}', 
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: -0.5)
-              ),
-            ],
+            ),
           ),
         );
       },
