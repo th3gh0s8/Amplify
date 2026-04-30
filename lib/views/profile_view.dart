@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/partner.dart';
 import '../services/api_service.dart';
+import '../services/session_manager.dart';
+import '../login_page.dart';
 import 'edit_profile_page.dart';
 
 class ProfileView extends StatefulWidget {
@@ -72,8 +74,15 @@ class _ProfileViewState extends State<ProfileView> {
             if (updated == true) _fetchPartnerData();
           }),
           const SizedBox(height: 12),
-          _buildActionButton('LOGOUT', Icons.power_settings_new, () {
-             Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+          _buildActionButton('LOGOUT', Icons.power_settings_new, () async {
+             // Clear session on logout
+             await SessionManager.clearSession();
+             if (mounted) {
+               Navigator.of(context).pushAndRemoveUntil(
+                 MaterialPageRoute(builder: (context) => const LoginPage()),
+                 (route) => false
+               );
+             }
           }, isDestructive: true),
           const SizedBox(height: 40),
         ],

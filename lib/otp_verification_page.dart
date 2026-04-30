@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dashboard_page.dart';
 import 'services/api_service.dart';
+import 'services/session_manager.dart';
 
 class OTPVerificationPage extends StatefulWidget {
   final String phoneNumber;
@@ -26,6 +27,9 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
     try {
       bool isValid = await _apiService.verifyOTP(widget.phoneNumber, otpStr);
       if (isValid) {
+        // Save session on successful verification
+        await SessionManager.saveSession(widget.phoneNumber);
+
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(

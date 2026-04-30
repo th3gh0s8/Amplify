@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/partner.dart';
 import '../services/api_service.dart';
 import 'level_benefits_page.dart';
+import 'invoice_details_page.dart';
 
 class DashboardView extends StatefulWidget {
   final String phoneNumber;
@@ -137,7 +138,7 @@ class _DashboardViewState extends State<DashboardView> {
         ),
         _buildStatCard(
           'STATUS', 
-          '$apiLevel ($commRate)',
+          apiLevel, // Removed ($commRate) to clean up the UI
           _getLevelColors(apiLevel),
           Colors.white,
         ),

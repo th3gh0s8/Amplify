@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'login_page.dart';
+import 'dashboard_page.dart';
+import 'services/session_manager.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +24,20 @@ class MyApp extends StatelessWidget {
       title: 'xPower Partners',
       debugShowCheckedModeBanner: false,
       theme: _buildTheme(),
-      home: const LoginPage(),
+      home: FutureBuilder<String?>(
+        future: SessionManager.getSession(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator(color: Colors.black)),
+            );
+          }
+          if (snapshot.hasData && snapshot.data != null && snapshot.data!.isNotEmpty) {
+            return DashboardPage(phoneNumber: snapshot.data!);
+          }
+          return const LoginPage();
+        },
+      ),
     );
   }
 
