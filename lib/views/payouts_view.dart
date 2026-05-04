@@ -34,16 +34,68 @@ class _PayoutsViewState extends State<PayoutsView> {
   }
 
   Future<void> _handlePayoutRequest() async {
-    final balance = double.tryParse(_dashboardData?['total_earned']?.toString() ?? '0') ?? 0;
-    if (balance <= 0) {
+    final availableBalance = double.tryParse(_dashboardData?['available_balance']?.toString() ?? '0') ?? 0;
+    
+    if (availableBalance <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('INSUFFICIENT BALANCE')));
       return;
     }
 
+    // Show dialog to enter amount
+    final TextEditingController amountController = TextEditingController(text: availableBalance.toStringAsFixed(2));
+    
+    final requestedAmount = await showDialog<double>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('REQUEST PAYOUT', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('AVAILABLE: LKR ${availableBalance.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)),
+            const SizedBox(height: 20),
+            TextField(
+              controller: amountController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: const TextStyle(fontWeight: FontWeight.w900),
+              decoration: InputDecoration(
+                labelText: 'AMOUNT (LKR)',
+                fillColor: Colors.black.withOpacity(0.03),
+                filled: true,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL', style: TextStyle(color: Colors.black54))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.black, foregroundColor: Colors.white),
+            onPressed: () {
+              final val = double.tryParse(amountController.text);
+              if (val == null || val <= 0) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ENTER VALID AMOUNT')));
+                return;
+              }
+              if (val > availableBalance) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('EXCEEDS AVAILABLE BALANCE')));
+                return;
+              }
+              Navigator.pop(context, val);
+            },
+            child: const Text('REQUEST'),
+          ),
+        ],
+      ),
+    );
+
+    if (requestedAmount == null) return;
+
     setState(() => _isRequesting = true);
     final mobileNo = widget.phoneNumber;
     
-    final result = await _apiService.requestPayout(mobileNo, balance);
+    final result = await _apiService.requestPayout(mobileNo, requestedAmount);
       
     if (mounted) {
       if (result['success']) {
@@ -78,25 +130,30 @@ class _PayoutsViewState extends State<PayoutsView> {
   Widget build(BuildContext context) {
     if (_isLoading) return const Center(child: CircularProgressIndicator(color: Colors.black));
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'PAYOUTS',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1),
-          ),
-          const SizedBox(height: 24),
-          _buildBalanceCard(),
-          const SizedBox(height: 40),
-          const Text(
-            'PAYOUT HISTORY', 
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.black38)
-          ),
-          const SizedBox(height: 16),
-          _buildPayoutList(),
-        ],
+    return RefreshIndicator(
+      onRefresh: _fetchPayoutData,
+      color: Colors.black,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'PAYOUTS',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1),
+            ),
+            const SizedBox(height: 24),
+            _buildBalanceCard(),
+            const SizedBox(height: 40),
+            const Text(
+              'PAYOUT HISTORY', 
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.black38)
+            ),
+            const SizedBox(height: 16),
+            _buildPayoutList(),
+          ],
+        ),
       ),
     );
   }
@@ -133,7 +190,7 @@ class _PayoutsViewState extends State<PayoutsView> {
           ),
           const SizedBox(height: 12),
           Text(
-            'LKR ${_dashboardData?['total_earned'] ?? '0.00'}',
+            'LKR ${_dashboardData?['available_balance'] ?? '0.00'}',
             style: const TextStyle(
               color: Colors.white, 
               fontSize: 36, 
@@ -176,6 +233,8 @@ class _PayoutsViewState extends State<PayoutsView> {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final payout = _payouts[index];
+        final status = payout['status'].toString().toLowerCase();
+        
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -204,12 +263,12 @@ class _PayoutsViewState extends State<PayoutsView> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: _getStatusColor(payout['status']).withOpacity(0.1),
+                          color: _getStatusColor(status).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          payout['status'].toString().toUpperCase(),
-                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: _getStatusColor(payout['status'])),
+                          status.toUpperCase(),
+                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: _getStatusColor(status)),
                         ),
                       ),
                     ],
@@ -228,10 +287,11 @@ class _PayoutsViewState extends State<PayoutsView> {
   }
 
   Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
+    switch (status) {
       case 'pending': return Colors.orange;
+      case 'processing': return Colors.blue;
       case 'completed': return Colors.green;
-      case 'rejected': return Colors.red;
+      case 'failed': return Colors.red;
       default: return Colors.grey;
     }
   }

@@ -186,7 +186,8 @@ class ApiService {
       );
       return json.decode(response.body);
     } catch (e) {
-      return {'success': false, 'message': 'Network Error'};
+      print('DEBUG: Payout API Error: $e'); // This will show the actual error in the console
+      return {'success': false, 'message': 'Network Error: Check if XAMPP is running and IP is correct'};
     }
   }
 

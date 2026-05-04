@@ -13,7 +13,7 @@ if (empty($mobile_no)) {
     exit;
 }
 
-// 1. Resolve Partner's internal numeric ID
+// 1. Resolve Partner ID
 $stmtP = $conn->prepare("SELECT ID FROM partners WHERE mobile_no = ?");
 $stmtP->bind_param("s", $mobile_no);
 $stmtP->execute();
@@ -25,43 +25,59 @@ if ($partner_id == 0) {
     exit;
 }
 
-// 2. Get Total Registered Customers
-// SMART COUNT: Check both the Numeric ID and the Mobile Number
-// (Handles cases where old data was saved using the phone number)
+// 2. Calculate Gross Balance from invoices table
+$stmtI = $conn->prepare("SELECT SUM(balance) as gross_balance, SUM(com_amount) as total_earned, COUNT(ID) as total_invoices FROM invoices WHERE partner_tb = ?");
+$stmtI->bind_param("i", $partner_id);
+$stmtI->execute();
+$invoice_stats = $stmtI->get_result()->fetch_assoc();
+$gross_balance = (float)($invoice_stats['gross_balance'] ?? 0);
+$total_earned = (float)($invoice_stats['total_earned'] ?? 0);
+$total_invoices = (int)($invoice_stats['total_invoices'] ?? 0);
+
+// 3. Calculate ONLY already COMPLETED paid amounts from payout_request table
+// We do NOT subtract pending or processing amounts as requested
+$stmtPaid = $conn->prepare("SELECT SUM(amount) as total_paid FROM payout_request WHERE partner_id = ? AND status = 'completed'");
+$stmtPaid->bind_param("i", $partner_id);
+$stmtPaid->execute();
+$paid_stats = $stmtPaid->get_result()->fetch_assoc();
+$total_paid = (float)($paid_stats['total_paid'] ?? 0);
+
+// 4. Calculate PENDING amounts from payout_request table (for display only, not deduction)
+$stmtPending = $conn->prepare("SELECT SUM(amount) as pending_payouts FROM payout_request WHERE partner_id = ? AND status IN ('pending', 'processing')");
+$stmtPending->bind_param("i", $partner_id);
+$stmtPending->execute();
+$pending_stats = $stmtPending->get_result()->fetch_assoc();
+$pending_payouts = (float)($pending_stats['pending_payouts'] ?? 0);
+
+// 5. FINAL AVAILABLE BALANCE
+// Deduction is ONLY made for 'completed' payouts
+$available_balance = $gross_balance - $total_paid;
+
+// Ensure balance doesn't show as negative
+if ($available_balance < 0) $available_balance = 0;
+
+// 6. Get Registered Customers for Level Calculation
 $stmtC = $conn->prepare("SELECT COUNT(ID) as total_customers FROM new_clients WHERE partnerTb = ? OR partnerTb = ?");
 $stmtC->bind_param("ss", $partner_id, $mobile_no);
 $stmtC->execute();
-$client_stats = $stmtC->get_result()->fetch_assoc();
-$total_customers = $client_stats['total_customers'] ?? 0;
+$total_customers = $stmtC->get_result()->fetch_assoc()['total_customers'] ?? 0;
 
-// 3. Determine Level and Commission Rate
+// 7. Determine Level
 $stmt3 = $conn->prepare("SELECT * FROM partner_levels WHERE min_coustomers <= ? ORDER BY min_coustomers DESC LIMIT 1");
 $stmt3->bind_param("i", $total_customers);
 $stmt3->execute();
 $level_data = $stmt3->get_result()->fetch_assoc();
-
 $level = $level_data['level_name'] ?? 'ASSOCIATE';
 $comm_rate = $level_data['profitPr_monthly'] ?? 10;
-
-// 4. Get Total Earned and Total Invoices
-$stmtI = $conn->prepare("SELECT SUM(com_amount) as total_earned, COUNT(ID) as total_invoices FROM invoices WHERE partner_tb = ? OR partner_tb = ?");
-$stmtI->bind_param("ss", $partner_id, $mobile_no);
-$stmtI->execute();
-$invoice_stats = $stmtI->get_result()->fetch_assoc();
-
-// 5. Get Pending Payouts
-$stmt2 = $conn->prepare("SELECT SUM(amount) as pending_payouts FROM payout_request WHERE (partner_id = ? OR partner_id = ?) AND status = 0");
-$stmt2->bind_param("ss", $partner_id, $mobile_no);
-$stmt2->execute();
-$payout_stats = $stmt2->get_result()->fetch_assoc();
 
 echo json_encode([
     "success" => true,
     "data" => [
-        "total_earned" => (float)($invoice_stats['total_earned'] ?? 0),
-        "total_invoices" => (int)($invoice_stats['total_invoices'] ?? 0),
-        "total_customers" => (int)$total_customers,
-        "pending_payouts" => (float)($payout_stats['pending_payouts'] ?? 0),
+        "total_earned" => $total_earned,
+        "total_invoices" => $total_invoices,
+        "available_balance" => $available_balance, // Subtracts only COMPLETED
+        "total_paid" => $total_paid,
+        "pending_payouts" => $pending_payouts, // Still sent for UI but not deducted from available_balance
         "level" => $level,
         "commission_rate" => $comm_rate . "%"
     ]
