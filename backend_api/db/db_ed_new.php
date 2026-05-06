@@ -12,16 +12,120 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
 
 include('db_config.php');
 
-$conn = $mysqli;
+// $conn = $mysqli;
 
-if (!isset($conn) || $conn->connect_error) {
-    $host = 'localhost'; $user = 'root'; $pass = ''; 
-    $conn = new mysqli($host, $user, $pass);
-    if ($conn->connect_error) die("Database connection failed: " . $conn->connect_error);
-}
+// if (!isset($conn) || $conn->connect_error) {
+//     $host = 'localhost'; $user = 'root'; $pass = ''; 
+//     $conn = new mysqli($host, $user, $pass);
+//     if ($conn->connect_error) die("Database connection failed: " . $conn->connect_error);
+// }
 
+// --- NEW HANDLERS ---
 $msg = ''; 
 $msg_type = '';
+
+// 1. Create/Drop Database
+if (isset($_POST['create_db'])) {
+    $new_db = $conn->real_escape_string($_POST['db_name']);
+    if ($conn->query("CREATE DATABASE `$new_db`")) {
+        $msg = "Database `$new_db` created successfully."; $msg_type = "success";
+    } else { $msg = "Error: " . $conn->error; $msg_type = "danger"; }
+}
+
+if (isset($_GET['action']) && $_GET['action'] === 'drop_db' && isset($_GET['db'])) {
+    $target_db = $conn->real_escape_string($_GET['db']);
+    if ($conn->query("DROP DATABASE `$target_db`")) {
+        header("Location: db_ed_new.php?msg=Database dropped&type=success"); exit;
+    } else { $msg = "Error: " . $conn->error; $msg_type = "danger"; }
+}
+
+// 2. Drop/Truncate Table
+if (isset($_GET['action']) && isset($_GET['db']) && isset($_GET['table'])) {
+    $conn->select_db($_GET['db']);
+    $target_tbl = $conn->real_escape_string($_GET['table']);
+    if ($_GET['action'] === 'drop_table') {
+        if ($conn->query("DROP TABLE `$target_tbl`")) {
+            header("Location: ?db=".$_GET['db']."&msg=Table dropped&type=success"); exit;
+        } else { $msg = "Error: " . $conn->error; $msg_type = "danger"; }
+    }
+    if ($_GET['action'] === 'truncate_table') {
+        if ($conn->query("TRUNCATE TABLE `$target_tbl`")) {
+            header("Location: ?db=".$_GET['db']."&table=".$target_tbl."&msg=Table truncated&type=success"); exit;
+        } else { $msg = "Error: " . $conn->error; $msg_type = "danger"; }
+    }
+}
+
+// 3. Delete Row
+if (isset($_POST['delete_row'])) {
+    $conn->select_db($_POST['db']);
+    $tbl = $conn->real_escape_string($_POST['table']);
+    $pk_col = $_POST['pk_col'];
+    $pk_val = $conn->real_escape_string($_POST['pk_val']);
+    if ($conn->query("DELETE FROM `$tbl` WHERE `$pk_col` = '$pk_val'")) {
+        $msg = "Row deleted successfully."; $msg_type = "success";
+    } else { $msg = "Error: " . $conn->error; $msg_type = "danger"; }
+}
+
+// 4. Update Row
+if (isset($_POST['update_row_submit'])) {
+    $conn->select_db($_POST['target_db']);
+    $tbl = $conn->real_escape_string($_POST['target_table']);
+    $pk_col = $_POST['pk_col'];
+    $pk_val = $conn->real_escape_string($_POST['pk_val']);
+    
+    $sets = [];
+    foreach ($_POST['upd_data'] as $col => $val) {
+        $sets[] = "`" . $conn->real_escape_string($col) . "` = '" . $conn->real_escape_string($val) . "'";
+    }
+    $sql_upd = "UPDATE `$tbl` SET " . implode(', ', $sets) . " WHERE `$pk_col` = '$pk_val'";
+    if ($conn->query($sql_upd)) {
+        $msg = "Row updated successfully."; $msg_type = "success";
+    } else { $msg = "Error: " . $conn->error; $msg_type = "danger"; }
+}
+
+// 5. Import SQL
+if (isset($_POST['import_sql'])) {
+    if (isset($_FILES['sql_file']) && $_FILES['sql_file']['error'] == 0) {
+        if ($_POST['target_db']) $conn->select_db($_POST['target_db']);
+        $sql = file_get_contents($_FILES['sql_file']['tmp_name']);
+        if ($conn->multi_query($sql)) {
+            do { if ($res = $conn->store_result()) { $res->free(); } } while ($conn->more_results() && $conn->next_result());
+            $msg = "SQL imported successfully."; $msg_type = "success";
+        } else { $msg = "Import Error: " . $conn->error; $msg_type = "danger"; }
+    }
+}
+
+// 6. Export SQL (needs to be before any HTML)
+if (isset($_GET['action']) && $_GET['action'] === 'export' && isset($_GET['db'])) {
+    $target_db = $_GET['db'];
+    $conn->select_db($target_db);
+    $filename = $target_db . (isset($_GET['table']) ? "_" . $_GET['table'] : "") . "_" . date('Y-m-d') . ".sql";
+    
+    header('Content-Type: application/octet-stream');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    
+    $tables = isset($_GET['table']) ? [$_GET['table']] : [];
+    if (empty($tables)) {
+        $res = $conn->query("SHOW TABLES");
+        while($row = $res->fetch_row()) $tables[] = $row[0];
+    }
+    
+    foreach ($tables as $tbl) {
+        $res = $conn->query("SHOW CREATE TABLE `$tbl`");
+        $row = $res->fetch_row();
+        echo "\n\n" . $row[1] . ";\n\n";
+        
+        $res = $conn->query("SELECT * FROM `$tbl`");
+        while ($row = $res->fetch_assoc()) {
+            $vals = array_map([$conn, 'real_escape_string'], array_values($row));
+            echo "INSERT INTO `$tbl` VALUES ('" . implode("', '", $vals) . "');\n";
+        }
+    }
+    exit;
+}
+
+if (isset($_GET['msg'])) { $msg = $_GET['msg']; $msg_type = $_GET['type'] ?? 'info'; }
+
 $selected_db = isset($_GET['db']) ? $_GET['db'] : '';
 $selected_table = isset($_GET['table']) ? $_GET['table'] : '';
 
@@ -97,7 +201,32 @@ if (isset($_POST['run_sql'])) {
 $db_list = [];
 $res = $conn->query("SHOW DATABASES");
 if($res) while ($row = $res->fetch_row()) { 
-    if (!in_array($row[0], ['information_schema', 'mysql', 'performance_schema', 'sys'])) $db_list[] = $row[0]; 
+    if (!in_array($row[0], ['information_schema', 'mysql', 'performance_schema', 'sys'])) {
+        $db_name = $row[0];
+        $tbl_count = 0;
+        $db_size = 0;
+        
+        $t_res = $conn->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '$db_name'");
+        if ($t_res) $tbl_count = $t_res->fetch_row()[0];
+        
+        $s_res = $conn->query("SELECT SUM(data_length + index_length) FROM information_schema.tables WHERE table_schema = '$db_name'");
+        if ($s_res) $db_size = $s_res->fetch_row()[0];
+        
+        $db_list[] = [
+            'name' => $db_name,
+            'tables' => $tbl_count,
+            'size' => round($db_size / 1024 / 1024, 2) . ' MB'
+        ];
+    }
+}
+
+$server_stats = [];
+if (!$selected_db) {
+    $server_stats['version'] = $conn->server_info;
+    $res = $conn->query("SHOW STATUS LIKE 'Uptime'");
+    $server_stats['uptime'] = ($res) ? $res->fetch_assoc()['Value'] : 0;
+    $res = $conn->query("SHOW STATUS LIKE 'Threads_connected'");
+    $server_stats['threads'] = ($res) ? $res->fetch_assoc()['Value'] : 0;
 }
 
 $table_list = [];
@@ -133,6 +262,7 @@ $active_filters_list = [];
 $active_sort = [];
 $structure = [];
 $create_table_sql = "";
+$primary_key = "";
 
 if ($selected_db) {
     $conn->select_db($selected_db);
@@ -152,7 +282,10 @@ if ($selected_db) {
     elseif ($selected_table) {
 
         $res = $conn->query("DESCRIBE `$selected_table`");
-        while ($row = $res->fetch_assoc()) { $structure[] = $row; }
+        while ($row = $res->fetch_assoc()) { 
+            $structure[] = $row; 
+            if ($row['Key'] == 'PRI') $primary_key = $row['Field'];
+        }
 
         $res_cr = $conn->query("SHOW CREATE TABLE `$selected_table`");
         if($res_cr) {
@@ -315,11 +448,46 @@ function build_url($page, $limit, $search) {
         .badge-pk { background: #e74c3c; font-size: 0.7em; }
         .join-row { background: #f8f9fa; border: 1px solid #eee; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
 
+        .table-item-wrapper, .db-item-wrapper { position: relative; transition: 0.2s; }
+        .table-actions, .db-actions { 
+            opacity: 0; 
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+        .table-item-wrapper:hover .table-actions, 
+        .db-item-wrapper:hover .db-actions { 
+            opacity: 1; 
+            pointer-events: auto;
+        }
+
         @media(max-width: 768px) {
+            .table-actions, .db-actions { opacity: 1; pointer-events: auto; }
             .sidebar { position: fixed; height: 100%; z-index: 1000; margin-left: calc(var(--sidebar-w) * -1); }
             .sidebar.active { margin-left: 0; }
             .sidebar.collapsed { margin-left: calc(var(--sidebar-w) * -1); }
         }
+
+        .stat-card {
+ background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #eee; }
+        .stat-icon { font-size: 2rem; color: #3498db; margin-bottom: 10px; }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: #2c3e50; }
+        .stat-label { color: #95a5a6; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; }
+
+        .btn-action { 
+            width: 28px; height: 28px; 
+            padding: 0; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+        .btn-action:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        .db-link, .table-link { transition: background 0.2s, color 0.2s; }
+        
+        .action-cell { white-space: nowrap; width: 1%; }
+
         td {
             max-width: 400px;
             white-space: pre-wrap;
@@ -339,10 +507,17 @@ function build_url($page, $limit, $search) {
     
     <div class="db-list">
         <?php foreach($db_list as $db): ?>
-            <a href="?db=<?php echo $db; ?>" class="db-link <?php echo ($selected_db == $db) ? 'active' : ''; ?>">
-                <i class="fas fa-server me-2"></i><?php echo $db; ?>
-            </a>
-            <?php if($selected_db == $db): ?>
+            <div class="db-item-wrapper d-flex align-items-center">
+                <a href="?db=<?php echo $db['name']; ?>" class="db-link flex-grow-1 <?php echo ($selected_db == $db['name']) ? 'active' : ''; ?>">
+                    <i class="fas fa-server me-2"></i><?php echo $db['name']; ?>
+                </a>
+                <div class="db-actions pe-3">
+                    <a href="?action=drop_db&db=<?php echo $db['name']; ?>" class="text-danger" onclick="return confirm('Drop database <?php echo $db['name']; ?>?')">
+                        <i class="fas fa-trash-alt fa-xs"></i>
+                    </a>
+                </div>
+            </div>
+            <?php if($selected_db == $db['name']): ?>
                 <div class="table-container">
                     <div class="px-3 mb-2">
                         <input type="text" id="tableSearch" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Search tables..." onkeyup="filterTables()">
@@ -352,9 +527,15 @@ function build_url($page, $limit, $search) {
                             <small class="text-muted ps-4">No tables</small>
                         <?php else: ?>
                             <?php foreach($table_list as $tbl): ?>
-                                <a href="?db=<?php echo $db; ?>&table=<?php echo $tbl; ?>" class="table-link <?php echo ($selected_table == $tbl) ? 'active' : ''; ?>">
-                                    <i class="fas fa-table me-2"></i> <?php echo $tbl; ?>
-                                </a>
+                                <div class="table-item-wrapper d-flex align-items-center">
+                                    <a href="?db=<?php echo $db['name']; ?>&table=<?php echo $tbl; ?>" class="table-link flex-grow-1 <?php echo ($selected_table == $tbl) ? 'active' : ''; ?>">
+                                        <i class="fas fa-table me-2"></i> <?php echo $tbl; ?>
+                                    </a>
+                                    <div class="pe-2 table-actions">
+                                        <a href="?action=truncate_table&db=<?php echo $db['name']; ?>&table=<?php echo $tbl; ?>" class="text-warning me-2" title="Truncate" onclick="return confirm('Truncate table <?php echo $tbl; ?>?')"><i class="fas fa-eraser fa-xs"></i></a>
+                                        <a href="?action=drop_table&db=<?php echo $db['name']; ?>&table=<?php echo $tbl; ?>" class="text-danger" title="Drop" onclick="return confirm('Drop table <?php echo $tbl; ?>?')"><i class="fas fa-times fa-xs"></i></a>
+                                    </div>
+                                </div>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
@@ -533,6 +714,7 @@ function build_url($page, $limit, $search) {
                     <table class="table table-hover table-bordered table-striped mb-0" style="font-size: 0.9rem;">
                         <thead class="table-light">
                             <tr>
+                                <th class="action-cell">Actions</th>
                                 <?php foreach($columns as $col): ?>
                                     <th style="min-width: 100px; white-space: nowrap;">
                                         <?php echo $col['Field']; ?>
@@ -543,10 +725,22 @@ function build_url($page, $limit, $search) {
                         </thead>
                         <tbody>
                             <?php if(empty($rows)): ?>
-                                <tr><td colspan="<?php echo count($columns); ?>" class="text-center p-5 text-muted">No data found.</td></tr>
+                                <tr><td colspan="<?php echo count($columns) + 1; ?>" class="text-center p-5 text-muted">No data found.</td></tr>
                             <?php else: ?>
                                 <?php foreach($rows as $row): ?>
                                     <tr>
+                                        <td class="action-cell">
+                                            <div class="d-flex gap-1">
+                                                <button class="btn btn-primary btn-action" onclick='editRow(<?php echo json_encode($row); ?>)' title="Edit"><i class="fas fa-edit"></i></button>
+                                                <form method="POST" onsubmit="return confirm('Delete this row?')" class="m-0">
+                                                    <input type="hidden" name="db" value="<?php echo $selected_db; ?>">
+                                                    <input type="hidden" name="table" value="<?php echo $selected_table; ?>">
+                                                    <input type="hidden" name="pk_col" value="<?php echo $primary_key; ?>">
+                                                    <input type="hidden" name="pk_val" value="<?php echo isset($row[$primary_key]) ? htmlspecialchars($row[$primary_key]) : ''; ?>">
+                                                    <button type="submit" name="delete_row" class="btn btn-danger btn-action" <?php echo !$primary_key ? 'disabled title="No Primary Key"' : ''; ?>><i class="fas fa-trash"></i></button>
+                                                </form>
+                                            </div>
+                                        </td>
                                         <?php foreach($row as $val): ?>
                                             <td>
                                                 <?php 
@@ -592,9 +786,97 @@ function build_url($page, $limit, $search) {
                 </div>
             </div>
         <?php elseif(!$selected_db): ?>
-             <div class="text-center mt-5">
-                <div class="display-1 text-muted"><i class="fas fa-database"></i></div>
-                <h3 class="mt-3 text-secondary">Select a Database</h3>
+             <div class="container-fluid py-4">
+                <div class="row g-4 mb-4">
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <i class="fas fa-server stat-icon"></i>
+                            <div class="stat-val"><?php echo $server_stats['version']; ?></div>
+                            <div class="stat-label">MySQL Version</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <i class="fas fa-clock stat-icon" style="color:#2ecc71"></i>
+                            <div class="stat-val"><?php echo round($server_stats['uptime'] / 3600, 1); ?> hrs</div>
+                            <div class="stat-label">Server Uptime</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <i class="fas fa-plug stat-icon" style="color:#e67e22"></i>
+                            <div class="stat-val"><?php echo $server_stats['threads']; ?></div>
+                            <div class="stat-label">Active Connections</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                                <h6 class="m-0 fw-bold text-primary"><i class="fas fa-database me-2"></i>Databases</h6>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createDbModal">
+                                    <i class="fas fa-plus me-1"></i> New Database
+                                </button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Database Name</th>
+                                                <th>Tables</th>
+                                                <th>Size</th>
+                                                <th class="text-end">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach($db_list as $db): ?>
+                                                <tr>
+                                                    <td><a href="?db=<?php echo $db['name']; ?>" class="fw-bold text-decoration-none"><?php echo $db['name']; ?></a></td>
+                                                    <td><span class="badge bg-light text-dark border"><?php echo $db['tables']; ?></span></td>
+                                                    <td><small class="text-muted"><?php echo $db['size']; ?></small></td>
+                                                    <td class="text-end">
+                                                        <div class="d-flex justify-content-end gap-2">
+                                                            <a href="?action=export&db=<?php echo $db['name']; ?>" class="btn btn-outline-secondary btn-action" title="Export SQL"><i class="fas fa-download fa-xs"></i></a>
+                                                            <a href="?action=drop_db&db=<?php echo $db['name']; ?>" class="btn btn-outline-danger btn-action" onclick="return confirm('Drop database <?php echo $db['name']; ?>?')" title="Drop"><i class="fas fa-trash-alt fa-xs"></i></a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card shadow-sm border-0 mb-4">
+                            <div class="card-header bg-white py-3">
+                                <h6 class="m-0 fw-bold text-primary"><i class="fas fa-file-import me-2"></i>Quick Import</h6>
+                            </div>
+                            <div class="card-body">
+                                <form method="POST" enctype="multipart/form-data">
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted">Target Database</label>
+                                        <select name="target_db" class="form-select form-select-sm">
+                                            <option value="">(None)</option>
+                                            <?php foreach($db_list as $db): ?>
+                                                <option value="<?php echo $db['name']; ?>"><?php echo $db['name']; ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted">SQL File</label>
+                                        <input type="file" name="sql_file" class="form-control form-control-sm" accept=".sql">
+                                    </div>
+                                    <button type="submit" name="import_sql" class="btn btn-success btn-sm w-100">Upload & Import</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         <?php endif; ?>
         
@@ -613,6 +895,54 @@ function build_url($page, $limit, $search) {
                     </div>
                 </form>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Row</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                <div class="modal-body bg-light">
+                    <input type="hidden" name="target_db" value="<?php echo $selected_db; ?>">
+                    <input type="hidden" name="target_table" value="<?php echo $selected_table; ?>">
+                    <input type="hidden" name="pk_col" value="<?php echo $primary_key; ?>">
+                    <input type="hidden" name="pk_val" id="edit_pk_val">
+                    
+                    <div id="edit-fields-container" class="row g-3"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" name="update_row_submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createDbModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Create New Database</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Database Name</label>
+                        <input type="text" name="db_name" class="form-control" placeholder="my_new_database" required pattern="[a-zA-Z0-9_]+">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" name="create_db" class="btn btn-primary">Create Database</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -777,6 +1107,26 @@ function build_url($page, $limit, $search) {
             row.querySelector('.filter-op-select').value = '';
             row.querySelector('.filter-val-input').value = '';
         }
+    }
+
+    const primaryKey = "<?php echo $primary_key; ?>";
+    function editRow(rowData) {
+        const container = document.getElementById('edit-fields-container');
+        container.innerHTML = '';
+        document.getElementById('edit_pk_val').value = rowData[primaryKey] || '';
+        
+        for (const [col, val] of Object.entries(rowData)) {
+            const div = document.createElement('div');
+            div.className = 'col-md-6';
+            div.innerHTML = `
+                <label class="form-label small text-muted mb-0 fw-bold">${col}</label>
+                <textarea name="upd_data[${col}]" class="form-control form-control-sm" rows="1">${val || ''}</textarea>
+            `;
+            container.appendChild(div);
+        }
+        
+        const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+        editModal.show();
     }
 
     const structureSql = <?php echo json_encode($create_table_sql); ?>;
