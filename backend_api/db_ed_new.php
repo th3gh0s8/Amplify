@@ -10,7 +10,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     die('Page Not Found.');
 }
 
-include('connection.php');
+include('db_config.php');
 
 $conn = $mysqli;
 
