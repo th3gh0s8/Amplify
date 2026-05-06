@@ -44,20 +44,21 @@ $total_paid = (float)($stmtPaid->get_result()->fetch_assoc()['total_paid'] ?? 0)
 $stmtPending = $conn->prepare("SELECT SUM(amount) as pending_payouts FROM payout_request WHERE partner_id = ? AND status IN ('pending', 'processing')");
 $stmtPending->bind_param("i", $partner_id);
 $stmtPending->execute();
-$pending_payouts = (float)($stmtPending->get_result()->fetch_assoc()['pending_payouts'] ?? 0);
+$pending_stats = $stmtPending->get_result()->fetch_assoc();
+$pending_payouts = (float)($pending_stats['pending_payouts'] ?? 0);
 
 // 5. Final Balance
 $available_balance = $gross_balance - $total_paid;
 if ($available_balance < 0) $available_balance = 0;
 
-// 6. Get Registered Customers - Using flexible check
-// Bind as (int, string) for safety
-$stmtC = $conn->prepare("SELECT COUNT(ID) as total_customers FROM new_clients WHERE partnerTb = ? OR partnerTb = ?");
+// 6. Get Registered Customers - ONLY ACTIVE ONES
+// As requested: Only show clients who have status 'Active'
+$stmtC = $conn->prepare("SELECT COUNT(ID) as total_customers FROM new_clients WHERE (partnerTb = ? OR partnerTb = ?) AND status = 'Active'");
 $stmtC->bind_param("is", $partner_id, $mobile_no);
 $stmtC->execute();
 $total_customers = (int)($stmtC->get_result()->fetch_assoc()['total_customers'] ?? 0);
 
-// 7. Determine Level
+// 7. Determine Level based on ACTIVE customers
 $stmt3 = $conn->prepare("SELECT * FROM partner_levels WHERE min_coustomers <= ? ORDER BY min_coustomers DESC LIMIT 1");
 $stmt3->bind_param("i", $total_customers);
 $stmt3->execute();

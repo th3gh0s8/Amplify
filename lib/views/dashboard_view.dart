@@ -140,7 +140,7 @@ class _DashboardViewState extends State<DashboardView> {
           Colors.white,
         ),
         _buildStatCard(
-          'CUSTOMERS',
+          'ACTIVE CLIENTS',
           '$totalCustomers',
           [const Color(0xFF212121), Colors.black],
           Colors.white,
