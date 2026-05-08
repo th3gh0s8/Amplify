@@ -39,11 +39,18 @@ try {
         $sql = "INSERT INTO web_codes (u_Id, otp_code, time, status) VALUES ('$partner_id', $otp, '$now', 0)";
 
         if ($conn->query($sql)) {
+            require_once 'sendSms_xpartner.php';
+            $c_code = ($partner['c_code'] && $partner['c_code'] != '0') ? $partner['c_code'] : '94';
+            $full_mobile = $c_code . ltrim($partner['mobile_no'], '0');
+            
+            $msg = "Your xPower Partners OTP is: $otp";
+            sendSMSF($msg, $full_mobile, "Mahallah360", "PartnerOTP", "partners", $partner['first_name'], $conn);
+
             echo json_encode([
                 "success" => true,
                 "data" => $partner,
                 "debug_otp" => $otp,
-                "message" => "FRESH OTP generated and logged."
+                "message" => "FRESH OTP generated and sent via SMS."
             ]);
         } else {
             echo json_encode([

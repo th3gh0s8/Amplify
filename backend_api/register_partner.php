@@ -65,9 +65,16 @@ try {
         $insert_sql = "INSERT INTO web_codes (u_Id, otp_code, time, status) VALUES ('$mobile_no', $otp, '$now', 0)";
 
         if ($conn->query($insert_sql)) {
+            require_once 'sendSms_xpartner.php';
+            $country_code = ($c_code && $c_code != '0') ? $c_code : '94';
+            $full_mobile = $country_code . ltrim($mobile_no, '0');
+
+            $msg = "Welcome to xPower Partners! Your OTP is: $otp";
+            sendSMSF($msg, $full_mobile, "Mahallah360", "PartnerRegistration", "partners", $first_name, $conn);
+
             echo json_encode([
                 "success" => true,
-                "message" => "Partner registered and OTP generated",
+                "message" => "Partner registered and OTP sent via SMS",
                 "data" => $partner_data,
                 "debug_otp" => $otp
             ]);

@@ -130,7 +130,7 @@ CREATE TABLE `login_activity` (
   `time` datetime NOT NULL,
   `status` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=141 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=173 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `login_activity` VALUES ('1', '772610398', '1', '2026-04-17 06:40:34', '1');
 INSERT INTO `login_activity` VALUES ('2', '772610398', 'login', '2026-04-17 07:13:08', '1');
@@ -269,6 +269,38 @@ INSERT INTO `login_activity` VALUES ('137', '702610398', 'login', '2026-05-06 06
 INSERT INTO `login_activity` VALUES ('138', '772610398', 'login', '2026-05-06 06:10:23', '1');
 INSERT INTO `login_activity` VALUES ('139', '772610398', 'login_failed', '2026-05-06 06:38:44', '0');
 INSERT INTO `login_activity` VALUES ('140', '772610398', 'login_failed', '2026-05-06 06:39:20', '0');
+INSERT INTO `login_activity` VALUES ('141', '10', 'register', '2026-05-07 05:52:44', '1');
+INSERT INTO `login_activity` VALUES ('142', '11', 'register', '2026-05-08 04:27:23', '1');
+INSERT INTO `login_activity` VALUES ('143', '12', 'register', '2026-05-08 04:30:05', '1');
+INSERT INTO `login_activity` VALUES ('144', '13', 'register', '2026-05-08 04:31:07', '1');
+INSERT INTO `login_activity` VALUES ('145', '1', '2', '2026-05-08 04:56:40', '0');
+INSERT INTO `login_activity` VALUES ('146', '1', '3', '2026-05-08 04:59:02', '1');
+INSERT INTO `login_activity` VALUES ('147', '7', '2', '2026-05-08 05:09:27', '0');
+INSERT INTO `login_activity` VALUES ('148', '7', '2', '2026-05-08 05:09:40', '0');
+INSERT INTO `login_activity` VALUES ('149', '7', '3', '2026-05-08 05:10:11', '1');
+INSERT INTO `login_activity` VALUES ('150', '7', '2', '2026-05-08 05:10:13', '0');
+INSERT INTO `login_activity` VALUES ('151', '7', '2', '2026-05-08 05:10:13', '0');
+INSERT INTO `login_activity` VALUES ('152', '7', '2', '2026-05-08 05:11:39', '0');
+INSERT INTO `login_activity` VALUES ('153', '7', '3', '2026-05-08 05:12:27', '1');
+INSERT INTO `login_activity` VALUES ('154', '7', '2', '2026-05-08 05:12:29', '0');
+INSERT INTO `login_activity` VALUES ('155', '7', '2', '2026-05-08 05:12:30', '0');
+INSERT INTO `login_activity` VALUES ('156', '1', '2', '2026-05-08 05:13:16', '0');
+INSERT INTO `login_activity` VALUES ('157', '1', '3', '2026-05-08 05:13:41', '1');
+INSERT INTO `login_activity` VALUES ('158', '1', '2', '2026-05-08 05:13:43', '0');
+INSERT INTO `login_activity` VALUES ('159', '1', '2', '2026-05-08 05:13:43', '0');
+INSERT INTO `login_activity` VALUES ('160', '7', '2', '2026-05-08 05:14:17', '0');
+INSERT INTO `login_activity` VALUES ('161', '7', '3', '2026-05-08 05:14:47', '1');
+INSERT INTO `login_activity` VALUES ('162', '7', '2', '2026-05-08 05:14:48', '0');
+INSERT INTO `login_activity` VALUES ('163', '7', '2', '2026-05-08 05:14:49', '0');
+INSERT INTO `login_activity` VALUES ('164', '7', '2', '2026-05-08 05:31:02', '0');
+INSERT INTO `login_activity` VALUES ('165', '7', '3', '2026-05-08 05:31:34', '1');
+INSERT INTO `login_activity` VALUES ('166', '1', '2', '2026-05-08 05:32:01', '0');
+INSERT INTO `login_activity` VALUES ('167', '1', '3', '2026-05-08 05:32:23', '1');
+INSERT INTO `login_activity` VALUES ('168', '7', '2', '2026-05-08 05:32:47', '0');
+INSERT INTO `login_activity` VALUES ('169', '7', '2', '2026-05-08 05:33:09', '0');
+INSERT INTO `login_activity` VALUES ('170', '7', '3', '2026-05-08 05:33:36', '1');
+INSERT INTO `login_activity` VALUES ('171', '7', '2', '2026-05-08 06:12:32', '0');
+INSERT INTO `login_activity` VALUES ('172', '7', '3', '2026-05-08 06:13:56', '1');
 
 
 CREATE TABLE `new_clients` (
@@ -541,7 +573,7 @@ INSERT INTO `new_clients` VALUES ('366', '7', 'Shiro Commander', 'Galaxy HQ', '1
 INSERT INTO `new_clients` VALUES ('367', '7', 'Pidge Tech', 'Hacker Den', '1123456979', 'Pidge Gunderson', '2147483647', 'Galaxy', 'Green / Code', 'Hunk approved', '', '2024-06-03 13:40:00', 'active');
 INSERT INTO `new_clients` VALUES ('368', '7', 'Hunk Tank', 'Food Lab', '1123456980', 'Hunk Garrett', '2147483647', 'Galaxy', 'Yellow / Heavy', 'Cooking + Armor', '', '2024-06-03 13:45:00', 'active');
 INSERT INTO `new_clients` VALUES ('369', '8', 'Nirodha Holding', 'beruwlea', '0', 'Azmmar', '775656798', 'beruwlea', 'Automobile', '-', '-', '2026-05-05 07:47:33', 'pending');
-INSERT INTO `new_clients` VALUES ('370', '7', 'omen soft', 'srilanka', '772610398', 'gh0s8 ', '702610398', 'world wide ', 'dev', '', '', '2026-05-06 07:01:07', 'pending');
+INSERT INTO `new_clients` VALUES ('370', '7', 'omen soft', 'srilanka', '772610398', 'gh0s8 ', '702610398', 'world wide ', 'dev', '', '', '0000-00-00 00:00:00', 'active');
 
 
 CREATE TABLE `partner_levels` (
@@ -565,11 +597,11 @@ CREATE TABLE `partners` (
   `c_code` int(5) NOT NULL,
   `mobile_no` varchar(20) NOT NULL,
   `email` varchar(50) NOT NULL,
-  `bank_account_no` varchar(25) NOT NULL,
+  `bank_account_no` varchar(25) DEFAULT NULL,
   `bank_name` varchar(25) NOT NULL,
   `bank_account_type` varchar(25) NOT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `partners` VALUES ('1', 'chamuditha', 'pasindu', '0', '772610398', 'chamudithapasindu@54gmail.com', '2147483647', 'com', 'Savings');
 INSERT INTO `partners` VALUES ('2', 'achala', 'seuwandi', '0', '703724016', 'achala@seuwandi.com', '2147483647', 'com', 'Savings');
@@ -577,8 +609,12 @@ INSERT INTO `partners` VALUES ('3', 'tharaka', 'devinda', '0', '713724016', 'dev
 INSERT INTO `partners` VALUES ('4', 'don', 'kanoji', '0', '726710457', 'kanoji@email.don', '2147483647', 'nsb', 'Savings');
 INSERT INTO `partners` VALUES ('5', 'micle', 'anthony', '0', '786712507', 'micle_jackson@antony.com', '2147483647', 'lsd', 'Savings');
 INSERT INTO `partners` VALUES ('6', 'yagami', 'light', '0', '77261039', 'kira@shinigami.com', '0', '', '');
-INSERT INTO `partners` VALUES ('7', 'lex', 'luther', '0', '702610398', 'luther@lexcorp.com', '2147483647', 'lexcorp international', 'Savings');
+INSERT INTO `partners` VALUES ('7', 'lex', 'luther', '94', '702610398', 'luther@lexcorp.com', '2147483647', 'lexcorp international', 'Savings');
 INSERT INTO `partners` VALUES ('8', 'Halir', 'Ramzi', '0', '775656798', 'halirramzi@gmail.com', '0', '', 'Savings');
+INSERT INTO `partners` VALUES ('10', 'amaan', 'sheriff', '94', '762123334', 'amaan@sheriff.com', '0', '', '');
+INSERT INTO `partners` VALUES ('11', 'Abrar', 'Munawfer', '94', '776817476', 'abrar@mail.com', '0', '', '');
+INSERT INTO `partners` VALUES ('12', 'test', 'test', '94', '771234567', 'test@mail.com', '0', '', '');
+INSERT INTO `partners` VALUES ('13', 'test', 'test', '94', '789456321', 'tes3@mail.com', '0', '', '');
 
 
 CREATE TABLE `payout_request` (
@@ -595,6 +631,80 @@ CREATE TABLE `payout_request` (
 INSERT INTO `payout_request` VALUES ('1', '7', '2026-05-04', '12:41:40', '500', 'pending', '1777891300');
 
 
+CREATE TABLE `sms_provider` (
+  `ID` int(11) NOT NULL AUTO_INCREMENT,
+  `br_id` int(11) NOT NULL,
+  `provider` varchar(50) NOT NULL,
+  `sms_url` text NOT NULL,
+  `apiKey` varchar(100) NOT NULL,
+  `acc_token` varchar(50) NOT NULL,
+  `token_date` date NOT NULL,
+  `api_type` varchar(30) NOT NULL DEFAULT 'Powersoft',
+  `amount` double NOT NULL,
+  `tot_send` int(11) NOT NULL,
+  `currnt_monSend` int(11) NOT NULL,
+  `balance` double NOT NULL,
+  `active` varchar(30) NOT NULL DEFAULT 'YES',
+  `success` varchar(50) NOT NULL DEFAULT '0',
+  `cloud` varchar(30) NOT NULL,
+  `mysql_db` varchar(30) NOT NULL,
+  PRIMARY KEY (`ID`),
+  KEY `ID` (`ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+INSERT INTO `sms_provider` VALUES ('7', '1', 'Etisalat', 'https://digitalreachapi.dialog.lk/camp_req.php', 'Mahallah360', '', '0000-00-00', 'PowersoftIntl', '0', '1350', '1350', '-4834.5', 'YES', '0', '', '');
+
+
+CREATE TABLE `sms_sendcount` (
+  `ID` int(11) NOT NULL AUTO_INCREMENT,
+  `br_id` int(11) NOT NULL,
+  `serverRef` varchar(100) NOT NULL,
+  `form_name` text NOT NULL,
+  `type` varchar(100) NOT NULL,
+  `sms` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `mobile` varchar(30) NOT NULL,
+  `provider` varchar(30) NOT NULL,
+  `rdate` date NOT NULL,
+  `rtime` time NOT NULL,
+  `user_ID` int(11) NOT NULL,
+  `sms_count` int(11) NOT NULL,
+  `sms_format` varchar(300) NOT NULL,
+  `cusID` varchar(50) NOT NULL,
+  `errors` text NOT NULL,
+  `cloud` varchar(30) NOT NULL,
+  `mysql_db` varchar(30) NOT NULL,
+  `mahalla_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`ID`),
+  KEY `ID` (`ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=1364 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+
+
+CREATE TABLE `sms_sendcount_error` (
+  `ID` int(11) NOT NULL AUTO_INCREMENT,
+  `br_id` int(11) NOT NULL,
+  `serverRef` varchar(100) NOT NULL,
+  `form_name` text NOT NULL,
+  `type` varchar(100) NOT NULL,
+  `sms` varchar(1000) NOT NULL,
+  `mobile` varchar(30) NOT NULL,
+  `provider` varchar(30) NOT NULL,
+  `rdate` date NOT NULL,
+  `rtime` time NOT NULL,
+  `user_ID` int(11) NOT NULL,
+  `sms_count` int(11) NOT NULL,
+  `sms_format` varchar(300) NOT NULL,
+  `cusID` varchar(50) NOT NULL,
+  `errors` text NOT NULL,
+  `cloud` varchar(30) NOT NULL,
+  `mysql_db` varchar(30) NOT NULL,
+  `mahalla_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`ID`),
+  KEY `ID` (`ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=104 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+
+
 CREATE TABLE `web_codes` (
   `ID` int(11) NOT NULL AUTO_INCREMENT,
   `u_Id` varchar(20) NOT NULL,
@@ -602,7 +712,7 @@ CREATE TABLE `web_codes` (
   `time` datetime NOT NULL,
   `status` int(11) NOT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=349 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=407 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `web_codes` VALUES ('340', '772610398', '2112', '2026-05-06 09:24:53', '1');
 INSERT INTO `web_codes` VALUES ('341', '702610398', '8460', '2026-05-06 09:26:16', '1');
@@ -613,6 +723,64 @@ INSERT INTO `web_codes` VALUES ('345', '775656798', '2532', '2026-05-06 11:22:02
 INSERT INTO `web_codes` VALUES ('346', '702610398', '8490', '2026-05-06 11:47:12', '1');
 INSERT INTO `web_codes` VALUES ('347', '775656798', '4250', '2026-05-06 18:04:02', '0');
 INSERT INTO `web_codes` VALUES ('348', '702610398', '3929', '2026-05-07 03:38:43', '1');
+INSERT INTO `web_codes` VALUES ('349', '702610398', '7455', '2026-05-07 04:43:17', '1');
+INSERT INTO `web_codes` VALUES ('350', '772610398', '4178', '2026-05-07 05:06:24', '1');
+INSERT INTO `web_codes` VALUES ('351', '762123334', '6218', '2026-05-07 05:52:44', '1');
+INSERT INTO `web_codes` VALUES ('352', '702610398', '3095', '2026-05-07 05:54:21', '1');
+INSERT INTO `web_codes` VALUES ('353', '702610398', '5692', '2026-05-07 07:23:09', '1');
+INSERT INTO `web_codes` VALUES ('354', '762123334', '8421', '2026-05-07 07:27:06', '1');
+INSERT INTO `web_codes` VALUES ('355', '702610398', '6268', '2026-05-08 03:39:12', '1');
+INSERT INTO `web_codes` VALUES ('356', '702610398', '8661', '2026-05-08 03:40:27', '1');
+INSERT INTO `web_codes` VALUES ('357', '702610398', '4362', '2026-05-08 04:09:13', '1');
+INSERT INTO `web_codes` VALUES ('358', '702610398', '7951', '2026-05-08 04:10:03', '1');
+INSERT INTO `web_codes` VALUES ('359', '702610398', '5433', '2026-05-08 04:10:05', '1');
+INSERT INTO `web_codes` VALUES ('360', '702610398', '5361', '2026-05-08 04:10:15', '1');
+INSERT INTO `web_codes` VALUES ('361', '702610398', '5033', '2026-05-08 04:10:35', '1');
+INSERT INTO `web_codes` VALUES ('362', '702610398', '4929', '2026-05-08 04:11:02', '1');
+INSERT INTO `web_codes` VALUES ('363', '702610398', '2357', '2026-05-08 04:11:04', '1');
+INSERT INTO `web_codes` VALUES ('364', '772610398', '5730', '2026-05-08 04:11:14', '1');
+INSERT INTO `web_codes` VALUES ('365', '772610398', '5423', '2026-05-08 04:11:36', '1');
+INSERT INTO `web_codes` VALUES ('366', '772610398', '2444', '2026-05-08 04:11:37', '1');
+INSERT INTO `web_codes` VALUES ('367', '702610398', '9984', '2026-05-08 04:11:49', '1');
+INSERT INTO `web_codes` VALUES ('368', '702610398', '2327', '2026-05-08 04:26:09', '1');
+INSERT INTO `web_codes` VALUES ('369', '776817476', '7280', '2026-05-08 04:27:23', '1');
+INSERT INTO `web_codes` VALUES ('370', '776817476', '6886', '2026-05-08 04:28:35', '1');
+INSERT INTO `web_codes` VALUES ('371', '776817476', '3774', '2026-05-08 04:28:37', '1');
+INSERT INTO `web_codes` VALUES ('372', '771234567', '5098', '2026-05-08 04:30:05', '1');
+INSERT INTO `web_codes` VALUES ('373', '771234567', '7003', '2026-05-08 04:30:43', '1');
+INSERT INTO `web_codes` VALUES ('374', '771234567', '7093', '2026-05-08 04:30:45', '1');
+INSERT INTO `web_codes` VALUES ('375', '789456321', '2755', '2026-05-08 04:31:07', '1');
+INSERT INTO `web_codes` VALUES ('376', '789456321', '7662', '2026-05-08 04:31:26', '1');
+INSERT INTO `web_codes` VALUES ('377', '789456321', '6700', '2026-05-08 04:31:27', '0');
+INSERT INTO `web_codes` VALUES ('378', '776817476', '1961', '2026-05-08 04:32:17', '1');
+INSERT INTO `web_codes` VALUES ('379', '776817476', '4254', '2026-05-08 04:32:54', '1');
+INSERT INTO `web_codes` VALUES ('380', '776817476', '4834', '2026-05-08 04:32:55', '1');
+INSERT INTO `web_codes` VALUES ('381', '771234567', '4352', '2026-05-08 04:33:23', '1');
+INSERT INTO `web_codes` VALUES ('382', '771234567', '5688', '2026-05-08 04:33:32', '1');
+INSERT INTO `web_codes` VALUES ('383', '771234567', '7222', '2026-05-08 04:33:34', '0');
+INSERT INTO `web_codes` VALUES ('384', '776817476', '3454', '2026-05-08 04:35:11', '1');
+INSERT INTO `web_codes` VALUES ('385', '776817476', '9109', '2026-05-08 04:35:41', '1');
+INSERT INTO `web_codes` VALUES ('386', '776817476', '8927', '2026-05-08 04:35:42', '0');
+INSERT INTO `web_codes` VALUES ('387', '7', '3969', '2026-05-08 04:40:13', '1');
+INSERT INTO `web_codes` VALUES ('388', '1', '9003', '2026-05-08 04:56:40', '1');
+INSERT INTO `web_codes` VALUES ('389', '7', '2228', '2026-05-08 05:09:27', '1');
+INSERT INTO `web_codes` VALUES ('390', '7', '5661', '2026-05-08 05:09:40', '1');
+INSERT INTO `web_codes` VALUES ('391', '7', '4671', '2026-05-08 05:10:13', '1');
+INSERT INTO `web_codes` VALUES ('392', '7', '4829', '2026-05-08 05:10:13', '1');
+INSERT INTO `web_codes` VALUES ('393', '7', '2283', '2026-05-08 05:11:39', '1');
+INSERT INTO `web_codes` VALUES ('394', '7', '9329', '2026-05-08 05:12:29', '1');
+INSERT INTO `web_codes` VALUES ('395', '7', '1693', '2026-05-08 05:12:30', '1');
+INSERT INTO `web_codes` VALUES ('396', '1', '3747', '2026-05-08 05:13:16', '1');
+INSERT INTO `web_codes` VALUES ('397', '1', '2128', '2026-05-08 05:13:43', '1');
+INSERT INTO `web_codes` VALUES ('398', '1', '1787', '2026-05-08 05:13:43', '1');
+INSERT INTO `web_codes` VALUES ('399', '7', '2252', '2026-05-08 05:14:17', '1');
+INSERT INTO `web_codes` VALUES ('400', '7', '2143', '2026-05-08 05:14:48', '1');
+INSERT INTO `web_codes` VALUES ('401', '7', '3925', '2026-05-08 05:14:49', '1');
+INSERT INTO `web_codes` VALUES ('402', '7', '1940', '2026-05-08 05:31:02', '1');
+INSERT INTO `web_codes` VALUES ('403', '1', '6091', '2026-05-08 05:32:01', '1');
+INSERT INTO `web_codes` VALUES ('404', '7', '3834', '2026-05-08 05:32:47', '1');
+INSERT INTO `web_codes` VALUES ('405', '7', '3113', '2026-05-08 05:33:09', '1');
+INSERT INTO `web_codes` VALUES ('406', '7', '5317', '2026-05-08 06:12:32', '1');
 
 
 CREATE TABLE `web_documents` (
@@ -627,27 +795,11 @@ CREATE TABLE `web_documents` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-<br />
-<b>Deprecated</b>:  mysqli::real_escape_string(): Passing null to parameter #1 ($string) of type string is deprecated in <b>/home/stcloudb/public_html/xPowerPartners/db/db_ed_new.php</b> on line <b>137</b><br />
 INSERT INTO `web_documents` VALUES ('1', 'Screenshot_20260410-212347_YouTube.jpg', 'image', 'uploads/payment_slips/1777007011_Screenshot_20260410-212347_YouTube.jpg', '320', '2026-04-24 10:33:31', '', 'active');
-<br />
-<b>Deprecated</b>:  mysqli::real_escape_string(): Passing null to parameter #1 ($string) of type string is deprecated in <b>/home/stcloudb/public_html/xPowerPartners/db/db_ed_new.php</b> on line <b>137</b><br />
 INSERT INTO `web_documents` VALUES ('2', 'Screenshot_20260418-160743_YouTube.jpg', 'image', 'uploads/payment_slips/1777012167_Screenshot_20260418-160743_YouTube.jpg', '172', '2026-04-24 11:59:27', '', 'active');
-<br />
-<b>Deprecated</b>:  mysqli::real_escape_string(): Passing null to parameter #1 ($string) of type string is deprecated in <b>/home/stcloudb/public_html/xPowerPartners/db/db_ed_new.php</b> on line <b>137</b><br />
 INSERT INTO `web_documents` VALUES ('3', 'Screenshot_20260418-160743_YouTube.jpg', 'image', 'uploads/payment_slips/1777012215_Screenshot_20260418-160743_YouTube.jpg', '172', '2026-04-24 12:00:15', '', 'active');
-<br />
-<b>Deprecated</b>:  mysqli::real_escape_string(): Passing null to parameter #1 ($string) of type string is deprecated in <b>/home/stcloudb/public_html/xPowerPartners/db/db_ed_new.php</b> on line <b>137</b><br />
 INSERT INTO `web_documents` VALUES ('4', 'Screenshot_20260418-160743_YouTube.jpg', 'image', 'uploads/payment_slips/1777012249_Screenshot_20260418-160743_YouTube.jpg', '172', '2026-04-24 12:00:49', '', 'active');
-<br />
-<b>Deprecated</b>:  mysqli::real_escape_string(): Passing null to parameter #1 ($string) of type string is deprecated in <b>/home/stcloudb/public_html/xPowerPartners/db/db_ed_new.php</b> on line <b>137</b><br />
 INSERT INTO `web_documents` VALUES ('5', 'Screenshot_20260418-160743_YouTube.jpg', 'image', 'uploads/payment_slips/1777012266_Screenshot_20260418-160743_YouTube.jpg', '172', '2026-04-24 12:01:06', '', 'active');
-<br />
-<b>Deprecated</b>:  mysqli::real_escape_string(): Passing null to parameter #1 ($string) of type string is deprecated in <b>/home/stcloudb/public_html/xPowerPartners/db/db_ed_new.php</b> on line <b>137</b><br />
 INSERT INTO `web_documents` VALUES ('6', 'Screenshot_20260410-095445_Stremio.jpg', 'image', 'uploads/payment_slips/1777018791_Screenshot_20260410-095445_Stremio.jpg', '295', '2026-04-24 13:49:51', '', 'active');
-<br />
-<b>Deprecated</b>:  mysqli::real_escape_string(): Passing null to parameter #1 ($string) of type string is deprecated in <b>/home/stcloudb/public_html/xPowerPartners/db/db_ed_new.php</b> on line <b>137</b><br />
 INSERT INTO `web_documents` VALUES ('7', 'Screenshot_20260404-200017_YouTube.jpg', 'image', 'uploads/payment_slips/1777021400_Screenshot_20260404-200017_YouTube.jpg', '273', '2026-04-24 14:33:20', '', 'active');
-<br />
-<b>Deprecated</b>:  mysqli::real_escape_string(): Passing null to parameter #1 ($string) of type string is deprecated in <b>/home/stcloudb/public_html/xPowerPartners/db/db_ed_new.php</b> on line <b>137</b><br />
 INSERT INTO `web_documents` VALUES ('8', 'IMG-20260505-WA0001.jpg', 'image', 'uploads/payment_slips/1777981653_IMG-20260505-WA0001.jpg', '73', '2026-05-05 07:47:33', '', 'active');
