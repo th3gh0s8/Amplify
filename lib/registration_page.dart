@@ -40,7 +40,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
         email: _emailController.text.trim(),
         bankAccountNo: '0', 
         bankName: '',     
-        bankAccountType: '', 
+        bankBranch: '', 
+        remarks: '',
       );
 
       final success = await _apiService.registerPartner(partner);

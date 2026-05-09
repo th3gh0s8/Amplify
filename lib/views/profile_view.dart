@@ -66,7 +66,7 @@ class _ProfileViewState extends State<ProfileView> {
             [
               _buildModernTile(Icons.account_balance, 'BANK NAME', _partner?.bankName?.toUpperCase() ?? 'NOT CONFIGURED'),
               _buildModernTile(Icons.tag, 'ACCOUNT NO', (_partner?.bankAccountNo == null || _partner?.bankAccountNo == '0' || _partner?.bankAccountNo == '') ? 'NOT CONFIGURED' : _partner!.bankAccountNo),
-              _buildModernTile(Icons.payments, 'BRANCH / TYPE', _partner?.bankAccountType?.toUpperCase() ?? 'NOT CONFIGURED'),
+              _buildModernTile(Icons.payments, 'BRANCH / TYPE', _partner?.bankBranch?.toUpperCase() ?? 'NOT CONFIGURED'),
             ],
           ),
           const SizedBox(height: 40),

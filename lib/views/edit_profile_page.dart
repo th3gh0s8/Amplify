@@ -21,7 +21,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _emailController;
   late TextEditingController _bankNameController;
   late TextEditingController _accNoController;
-  late String _accType;
+  late TextEditingController _bankBranchController;
+  late TextEditingController _remarksController;
+
+  late TextEditingController _nicController;
+  late TextEditingController _businessNameController;
+  late TextEditingController _businessTypeController;
+  late TextEditingController _addressController;
+  late TextEditingController _cityController;
+  late TextEditingController _taxIdController;
+  late TextEditingController _websiteController;
+  late String _partnerType;
 
   @override
   void initState() {
@@ -31,7 +41,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _emailController = TextEditingController(text: widget.partner.email);
     _bankNameController = TextEditingController(text: widget.partner.bankName);
     _accNoController = TextEditingController(text: (widget.partner.bankAccountNo == '0' || widget.partner.bankAccountNo == '') ? '' : widget.partner.bankAccountNo);
-    _accType = (widget.partner.bankAccountType == null || widget.partner.bankAccountType == '') ? 'Savings' : widget.partner.bankAccountType;
+    _bankBranchController = TextEditingController(text: widget.partner.bankBranch);
+    _remarksController = TextEditingController(text: widget.partner.remarks);
+
+    _partnerType = widget.partner.partnerType ?? 'freelancer';
+    _nicController = TextEditingController(text: widget.partner.nicNumber);
+    _businessNameController = TextEditingController(text: widget.partner.businessName);
+    _businessTypeController = TextEditingController(text: widget.partner.businessType);
+    _addressController = TextEditingController(text: widget.partner.addressLine1);
+    _cityController = TextEditingController(text: widget.partner.city);
+    _taxIdController = TextEditingController(text: widget.partner.taxId);
+    _websiteController = TextEditingController(text: widget.partner.website);
   }
 
   Future<void> _handleSave() async {
@@ -40,6 +60,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     setState(() => _isSaving = true);
 
     final updatedPartner = Partner(
+      id: widget.partner.id,
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
       mobileNo: widget.partner.mobileNo,
@@ -47,11 +68,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
       email: _emailController.text.trim(),
       bankAccountNo: _accNoController.text.trim(),
       bankName: _bankNameController.text.trim(),
-      bankAccountType: _accType,
+      bankBranch: _bankBranchController.text.trim(),
+      remarks: _remarksController.text.trim(),
+      partnerType: _partnerType,
+      nicNumber: _nicController.text.trim(),
+      businessName: _businessNameController.text.trim(),
+      businessType: _businessTypeController.text.trim(),
+      addressLine1: _addressController.text.trim(),
+      city: _cityController.text.trim(),
+      taxId: _taxIdController.text.trim(),
+      website: _websiteController.text.trim(),
     );
 
     final success = await _apiService.updateProfile(updatedPartner);
-
+  // ... (rest of the file)
     if (mounted) {
       setState(() => _isSaving = false);
       if (success) {
@@ -116,7 +146,56 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   },
                 ),
                 const SizedBox(height: 32),
-                _buildSectionTitle('BANK DETAILS'),
+                _buildSectionTitle('BUSINESS/FREELANCE DETAILS'),
+                DropdownButtonFormField<String>(
+                  value: _partnerType,
+                  decoration: const InputDecoration(labelText: 'PARTNER TYPE'),
+                  items: ['freelancer', 'business'].map((t) => DropdownMenuItem(value: t, child: Text(t.toUpperCase()))).toList(),
+                  onChanged: (v) => setState(() => _partnerType = v!),
+                ),
+                const SizedBox(height: 16),
+                if (_partnerType == 'freelancer') ...[
+                  TextFormField(
+                    controller: _nicController,
+                    decoration: const InputDecoration(labelText: 'NIC NUMBER'),
+                    validator: (v) => v!.isEmpty ? 'Required' : null,
+                  ),
+                ] else ...[
+                  TextFormField(
+                    controller: _businessNameController,
+                    decoration: const InputDecoration(labelText: 'BUSINESS NAME'),
+                    validator: (v) => v!.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _businessTypeController,
+                    decoration: const InputDecoration(labelText: 'BUSINESS TYPE'),
+                    validator: (v) => v!.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _addressController,
+                    decoration: const InputDecoration(labelText: 'ADDRESS'),
+                    validator: (v) => v!.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _cityController,
+                    decoration: const InputDecoration(labelText: 'CITY'),
+                    validator: (v) => v!.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _taxIdController,
+                    decoration: const InputDecoration(labelText: 'TAX ID'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _websiteController,
+                    decoration: const InputDecoration(labelText: 'WEBSITE'),
+                  ),
+                ],
+                const SizedBox(height: 48),
                 TextFormField(
                   controller: _bankNameController,
                   decoration: const InputDecoration(labelText: 'BANK NAME'),
@@ -128,11 +207,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: _accType,
-                  decoration: const InputDecoration(labelText: 'ACCOUNT TYPE'),
-                  items: ['Savings', 'Current'].map((t) => DropdownMenuItem(value: t, child: Text(t.toUpperCase()))).toList(),
-                  onChanged: (v) => setState(() => _accType = v!),
+                TextFormField(
+                  controller: _bankBranchController,
+                  decoration: const InputDecoration(labelText: 'BANK BRANCH'),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _remarksController,
+                  decoration: const InputDecoration(labelText: 'REMARKS'),
+                  maxLines: 2,
                 ),
                 const SizedBox(height: 48),
                 SizedBox(

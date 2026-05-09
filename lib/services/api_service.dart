@@ -102,7 +102,7 @@ class ApiService {
           'email': partner.email,
           'bank_account_no': partner.bankAccountNo.toString(),
           'bank_name': partner.bankName,
-          'bank_account_type': partner.bankAccountType,
+          'bank_account_type': partner.bankBranch,
         },
       );
 
@@ -180,7 +180,15 @@ class ApiService {
           'email': partner.email,
           'bank_account_no': partner.bankAccountNo.toString(),
           'bank_name': partner.bankName,
-          'bank_account_type': partner.bankAccountType,
+          'bank_account_type': partner.bankBranch,
+          'partner_type': partner.partnerType ?? '',
+          'nic_number': partner.nicNumber ?? '',
+          'business_name': partner.businessName ?? '',
+          'business_type': partner.businessType ?? '',
+          'address_line1': partner.addressLine1 ?? '',
+          'city': partner.city ?? '',
+          'tax_id': partner.taxId ?? '',
+          'website': partner.website ?? '',
         },
       );
       if (response.statusCode == 200) {

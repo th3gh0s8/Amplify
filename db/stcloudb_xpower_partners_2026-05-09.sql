@@ -130,7 +130,7 @@ CREATE TABLE `login_activity` (
   `time` datetime NOT NULL,
   `status` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=173 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=179 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `login_activity` VALUES ('1', '772610398', '1', '2026-04-17 06:40:34', '1');
 INSERT INTO `login_activity` VALUES ('2', '772610398', 'login', '2026-04-17 07:13:08', '1');
@@ -301,6 +301,12 @@ INSERT INTO `login_activity` VALUES ('169', '7', '2', '2026-05-08 05:33:09', '0'
 INSERT INTO `login_activity` VALUES ('170', '7', '3', '2026-05-08 05:33:36', '1');
 INSERT INTO `login_activity` VALUES ('171', '7', '2', '2026-05-08 06:12:32', '0');
 INSERT INTO `login_activity` VALUES ('172', '7', '3', '2026-05-08 06:13:56', '1');
+INSERT INTO `login_activity` VALUES ('173', '7', '2', '2026-05-08 09:45:07', '0');
+INSERT INTO `login_activity` VALUES ('174', '7', '3', '2026-05-08 09:48:57', '1');
+INSERT INTO `login_activity` VALUES ('175', '7', '2', '2026-05-08 10:15:42', '0');
+INSERT INTO `login_activity` VALUES ('176', '7', '3', '2026-05-08 10:16:29', '1');
+INSERT INTO `login_activity` VALUES ('177', '7', '2', '2026-05-09 06:19:56', '0');
+INSERT INTO `login_activity` VALUES ('178', '7', '3', '2026-05-09 06:20:13', '1');
 
 
 CREATE TABLE `new_clients` (
@@ -576,6 +582,25 @@ INSERT INTO `new_clients` VALUES ('369', '8', 'Nirodha Holding', 'beruwlea', '0'
 INSERT INTO `new_clients` VALUES ('370', '7', 'omen soft', 'srilanka', '772610398', 'gh0s8 ', '702610398', 'world wide ', 'dev', '', '', '0000-00-00 00:00:00', 'active');
 
 
+CREATE TABLE `partner_business_details` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `partner_id` int(11) NOT NULL,
+  `partner_type` enum('freelancer','business') NOT NULL,
+  `nic_number` varchar(20) DEFAULT NULL,
+  `business_name` varchar(100) DEFAULT NULL,
+  `business_type` varchar(50) DEFAULT NULL,
+  `address_line1` varchar(150) DEFAULT NULL,
+  `city` varchar(50) DEFAULT NULL,
+  `tax_id` varchar(50) DEFAULT NULL,
+  `website` varchar(150) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `partner_id` (`partner_id`),
+  KEY `idx_partner_type` (`partner_type`),
+  CONSTRAINT `partner_business_details_ibfk_1` FOREIGN KEY (`partner_id`) REFERENCES `partners` (`ID`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+
+
 CREATE TABLE `partner_levels` (
   `ID` int(11) NOT NULL AUTO_INCREMENT,
   `level_name` varchar(15) NOT NULL,
@@ -597,24 +622,25 @@ CREATE TABLE `partners` (
   `c_code` int(5) NOT NULL,
   `mobile_no` varchar(20) NOT NULL,
   `email` varchar(50) NOT NULL,
-  `bank_account_no` varchar(25) DEFAULT NULL,
+  `bank_account_no` varchar(25) NOT NULL,
   `bank_name` varchar(25) NOT NULL,
-  `bank_account_type` varchar(25) NOT NULL,
+  `bank_ac_branch` varchar(100) NOT NULL,
+  `remarks` varchar(255) NOT NULL,
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `partners` VALUES ('1', 'chamuditha', 'pasindu', '0', '772610398', 'chamudithapasindu@54gmail.com', '2147483647', 'com', 'Savings');
-INSERT INTO `partners` VALUES ('2', 'achala', 'seuwandi', '0', '703724016', 'achala@seuwandi.com', '2147483647', 'com', 'Savings');
-INSERT INTO `partners` VALUES ('3', 'tharaka', 'devinda', '0', '713724016', 'devinda@tharaka.com', '2147483647', 'comercial', 'Savings');
-INSERT INTO `partners` VALUES ('4', 'don', 'kanoji', '0', '726710457', 'kanoji@email.don', '2147483647', 'nsb', 'Savings');
-INSERT INTO `partners` VALUES ('5', 'micle', 'anthony', '0', '786712507', 'micle_jackson@antony.com', '2147483647', 'lsd', 'Savings');
-INSERT INTO `partners` VALUES ('6', 'yagami', 'light', '0', '77261039', 'kira@shinigami.com', '0', '', '');
-INSERT INTO `partners` VALUES ('7', 'lex', 'luther', '94', '702610398', 'luther@lexcorp.com', '2147483647', 'lexcorp international', 'Savings');
-INSERT INTO `partners` VALUES ('8', 'Halir', 'Ramzi', '0', '775656798', 'halirramzi@gmail.com', '0', '', 'Savings');
-INSERT INTO `partners` VALUES ('10', 'amaan', 'sheriff', '94', '762123334', 'amaan@sheriff.com', '0', '', '');
-INSERT INTO `partners` VALUES ('11', 'Abrar', 'Munawfer', '94', '776817476', 'abrar@mail.com', '0', '', '');
-INSERT INTO `partners` VALUES ('12', 'test', 'test', '94', '771234567', 'test@mail.com', '0', '', '');
-INSERT INTO `partners` VALUES ('13', 'test', 'test', '94', '789456321', 'tes3@mail.com', '0', '', '');
+INSERT INTO `partners` VALUES ('1', 'chamuditha', 'pasindu', '0', '772610398', 'chamudithapasindu@54gmail.com', '2147483647', 'com', '', '');
+INSERT INTO `partners` VALUES ('2', 'achala', 'seuwandi', '0', '703724016', 'achala@seuwandi.com', '2147483647', 'com', '', '');
+INSERT INTO `partners` VALUES ('3', 'tharaka', 'devinda', '0', '713724016', 'devinda@tharaka.com', '2147483647', 'comercial', '', '');
+INSERT INTO `partners` VALUES ('4', 'don', 'kanoji', '0', '726710457', 'kanoji@email.don', '2147483647', 'nsb', '', '');
+INSERT INTO `partners` VALUES ('5', 'micle', 'anthony', '0', '786712507', 'micle_jackson@antony.com', '2147483647', 'lsd', '', '');
+INSERT INTO `partners` VALUES ('6', 'yagami', 'light', '0', '77261039', 'kira@shinigami.com', '0', '', '', '');
+INSERT INTO `partners` VALUES ('7', 'lex', 'luther', '94', '702610398', 'luther@lexcorp.com', '2147483647', 'lexcorp international', '', '');
+INSERT INTO `partners` VALUES ('8', 'Halir', 'Ramzi', '0', '775656798', 'halirramzi@gmail.com', '0', '', '', '');
+INSERT INTO `partners` VALUES ('10', 'amaan', 'sheriff', '94', '762123334', 'amaan@sheriff.com', '0', '', '', '');
+INSERT INTO `partners` VALUES ('11', 'Abrar', 'Munawfer', '94', '776817476', 'abrar@mail.com', '0', '', '', '');
+INSERT INTO `partners` VALUES ('12', 'test', 'test', '94', '771234567', 'test@mail.com', '0', '', '', '');
+INSERT INTO `partners` VALUES ('13', 'test', 'test', '94', '789456321', 'tes3@mail.com', '0', '', '', '');
 
 
 CREATE TABLE `payout_request` (
@@ -652,7 +678,7 @@ CREATE TABLE `sms_provider` (
   KEY `ID` (`ID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
-INSERT INTO `sms_provider` VALUES ('7', '1', 'Etisalat', 'https://digitalreachapi.dialog.lk/camp_req.php', 'Mahallah360', '', '0000-00-00', 'PowersoftIntl', '0', '1350', '1350', '-4834.5', 'YES', '0', '', '');
+INSERT INTO `sms_provider` VALUES ('7', '1', 'Etisalat', 'https://digitalreachapi.dialog.lk/camp_req.php', 'Mahallah360', '', '0000-00-00', 'PowersoftIntl', '0', '1353', '1353', '-4837.5', 'YES', '0', '', '');
 
 
 CREATE TABLE `sms_sendcount` (
@@ -676,8 +702,11 @@ CREATE TABLE `sms_sendcount` (
   `mahalla_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`ID`),
   KEY `ID` (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=1364 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1367 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
+INSERT INTO `sms_sendcount` VALUES ('1364', '1', '2266670609', '1', 'PartnerOTP', 'Your xPower Partners OTP is: 2387', '94702610398', 'Etisalet', '2026-05-08', '09:45:09', '1', '1', 'lex', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount` VALUES ('1365', '1', '2266933625', '1', 'PartnerOTP', 'Your xPower Partners OTP is: 6556', '94702610398', 'Etisalet', '2026-05-08', '10:15:44', '1', '1', 'lex', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount` VALUES ('1366', '1', '2270919083', '1', 'PartnerOTP', 'Your xPower Partners OTP is: 7408', '94702610398', 'Etisalet', '2026-05-09', '06:19:58', '1', '1', 'lex', 'partners', '', '', '', '0');
 
 
 CREATE TABLE `sms_sendcount_error` (
@@ -712,7 +741,7 @@ CREATE TABLE `web_codes` (
   `time` datetime NOT NULL,
   `status` int(11) NOT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=407 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=410 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `web_codes` VALUES ('340', '772610398', '2112', '2026-05-06 09:24:53', '1');
 INSERT INTO `web_codes` VALUES ('341', '702610398', '8460', '2026-05-06 09:26:16', '1');
@@ -781,6 +810,9 @@ INSERT INTO `web_codes` VALUES ('403', '1', '6091', '2026-05-08 05:32:01', '1');
 INSERT INTO `web_codes` VALUES ('404', '7', '3834', '2026-05-08 05:32:47', '1');
 INSERT INTO `web_codes` VALUES ('405', '7', '3113', '2026-05-08 05:33:09', '1');
 INSERT INTO `web_codes` VALUES ('406', '7', '5317', '2026-05-08 06:12:32', '1');
+INSERT INTO `web_codes` VALUES ('407', '7', '2387', '2026-05-08 09:45:07', '1');
+INSERT INTO `web_codes` VALUES ('408', '7', '6556', '2026-05-08 10:15:42', '1');
+INSERT INTO `web_codes` VALUES ('409', '7', '7408', '2026-05-09 06:19:56', '1');
 
 
 CREATE TABLE `web_documents` (
