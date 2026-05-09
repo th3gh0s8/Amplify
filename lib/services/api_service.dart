@@ -181,6 +181,7 @@ class ApiService {
           'bank_account_no': partner.bankAccountNo.toString(),
           'bank_name': partner.bankName,
           'bank_account_type': partner.bankBranch,
+          'remarks': partner.remarks,
           'partner_type': partner.partnerType ?? '',
           'nic_number': partner.nicNumber ?? '',
           'business_name': partner.businessName ?? '',

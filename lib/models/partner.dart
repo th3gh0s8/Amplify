@@ -40,25 +40,28 @@ class Partner {
   });
 
   factory Partner.fromJson(Map<String, dynamic> json) {
+    // Helper to safely convert any value to a non-null string
+    String s(dynamic val) => (val ?? '').toString();
+
     return Partner(
       id: json['ID']?.toString(),
-      firstName: json['first_name'] ?? '',
-      lastName: json['last_name'] ?? '',
+      firstName: s(json['first_name']),
+      lastName: s(json['last_name']),
       cCode: json['c_code']?.toString(),
-      mobileNo: json['mobile_no']?.toString() ?? '',
-      email: json['email'] ?? '',
-      bankAccountNo: json['bank_account_no']?.toString() ?? '',
-      bankName: json['bank_name'] ?? '',
-      bankBranch: json['bank_ac_branch'] ?? '',
-      remarks: json['remarks'] ?? '',
-      partnerType: json['partner_type'],
-      nicNumber: json['nic_number'],
-      businessName: json['business_name'],
-      businessType: json['business_type'],
-      addressLine1: json['address_line1'],
-      city: json['city'],
-      taxId: json['tax_id'],
-      website: json['website'],
+      mobileNo: s(json['mobile_no']),
+      email: s(json['email']),
+      bankAccountNo: s(json['bank_account_no']),
+      bankName: s(json['bank_name']),
+      bankBranch: s(json['bank_ac_branch']),
+      remarks: s(json['remarks']),
+      partnerType: json['partner_type']?.toString(),
+      nicNumber: json['nic_number']?.toString(),
+      businessName: json['business_name']?.toString(),
+      businessType: json['business_type']?.toString(),
+      addressLine1: json['address_line1']?.toString(),
+      city: json['city']?.toString(),
+      taxId: json['tax_id']?.toString(),
+      website: json['website']?.toString(),
     );
   }
 

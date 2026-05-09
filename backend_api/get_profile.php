@@ -1,6 +1,9 @@
 <?php
-// FETCH PARTNER DATA WITHOUT GENERATING OTP - STABILIZED VERSION
 require_once 'cors_headers.php';
+
+// FETCH ALL PARTNER DATA IN ONE SHOT
+header('Content-Type: application/json');
+header('Cache-Control: no-cache, no-store, must-revalidate');
 
 if (file_exists('db/db_config.php')) {
     require_once 'db/db_config.php';
@@ -21,7 +24,7 @@ $no_zero = ltrim($clean_no, '0');
 $with_zero = '0' . $no_zero;
 
 try {
-    // Find Partner
+    // Search Partner - SELECT * includes all business columns from the same table
     $stmt = $conn->prepare("SELECT * FROM partners WHERE mobile_no = ? OR mobile_no = ? LIMIT 1");
     $stmt->bind_param("ss", $no_zero, $with_zero);
     $stmt->execute();
@@ -29,7 +32,6 @@ try {
 
     if ($result->num_rows > 0) {
         $partner = $result->fetch_assoc();
-        // IMPORTANT: Ensure we send the data inside a 'data' key to match the App's expectations
         echo json_encode([
             "success" => true,
             "data" => $partner

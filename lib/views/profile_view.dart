@@ -31,6 +31,7 @@ class _ProfileViewState extends State<ProfileView> {
     try {
       final mobileNo = widget.phoneNumber;
       final partner = await _apiService.getProfile(mobileNo);
+      print('DEBUG: Profile Data Fetched: ${partner?.toJson()}');
       if (mounted) {
         setState(() {
           _partner = partner;
@@ -38,6 +39,7 @@ class _ProfileViewState extends State<ProfileView> {
         });
       }
     } catch (e) {
+      print('DEBUG: Profile Fetch Error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -46,58 +48,87 @@ class _ProfileViewState extends State<ProfileView> {
   Widget build(BuildContext context) {
     if (_isLoading) return const Center(child: CircularProgressIndicator(color: Colors.black));
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        children: [
-          _buildHeader(),
-          const SizedBox(height: 40),
-          _buildInfoSection(
-            'PERSONAL DATA',
-            [
-              _buildModernTile(Icons.person, 'FULL NAME', '${_partner?.firstName} ${_partner?.lastName}'.toUpperCase()),
-              _buildModernTile(Icons.alternate_email, 'EMAIL ADDRESS', _partner?.email?.toUpperCase() ?? '-'),
-              _buildModernTile(Icons.phone_android, 'MOBILE NO', _partner?.mobileNo ?? widget.phoneNumber),
+    return RefreshIndicator(
+      onRefresh: _fetchPartnerData,
+      color: Colors.black,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 40),
+            _buildInfoSection(
+              'PERSONAL DATA',
+              [
+                _buildModernTile(Icons.person, 'FULL NAME', '${_partner?.firstName} ${_partner?.lastName}'.toUpperCase()),
+                _buildModernTile(Icons.alternate_email, 'EMAIL ADDRESS', _partner?.email?.toUpperCase() ?? '-'),
+                _buildModernTile(Icons.phone_android, 'MOBILE NO', _partner?.mobileNo ?? widget.phoneNumber),
+              ],
+            ),
+            const SizedBox(height: 24),
+            if (_partner?.partnerType != null) ...[
+              _buildInfoSection(
+                'BUSINESS / FREELANCE DETAILS',
+                [
+                  _buildModernTile(Icons.category, 'PARTNER TYPE', _partner!.partnerType!.toUpperCase()),
+                  if (_partner!.partnerType == 'freelancer' && _partner!.nicNumber != null && _partner!.nicNumber!.isNotEmpty)
+                    _buildModernTile(Icons.badge, 'NIC NUMBER', _partner!.nicNumber!.toUpperCase()),
+                  if (_partner!.partnerType == 'business') ...[
+                    _buildModernTile(Icons.business, 'BUSINESS NAME', _partner!.businessName?.toUpperCase() ?? '-'),
+                    _buildModernTile(Icons.settings, 'BUSINESS TYPE', _partner!.businessType?.toUpperCase() ?? '-'),
+                    _buildModernTile(Icons.location_city, 'CITY', _partner!.city?.toUpperCase() ?? '-'),
+                    _buildModernTile(Icons.public, 'WEBSITE', _partner!.website ?? '-'),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 24),
             ],
-          ),
-          const SizedBox(height: 24),
-          _buildInfoSection(
-            'BANKING DETAILS',
-            [
-              _buildModernTile(Icons.account_balance, 'BANK NAME', _partner?.bankName?.toUpperCase() ?? 'NOT CONFIGURED'),
-              _buildModernTile(Icons.tag, 'ACCOUNT NO', (_partner?.bankAccountNo == null || _partner?.bankAccountNo == '0' || _partner?.bankAccountNo == '') ? 'NOT CONFIGURED' : _partner!.bankAccountNo),
-              _buildModernTile(Icons.payments, 'BRANCH / TYPE', _partner?.bankBranch?.toUpperCase() ?? 'NOT CONFIGURED'),
+            _buildInfoSection(
+              'BANKING DETAILS',
+              [
+                _buildModernTile(Icons.account_balance, 'BANK NAME', _partner?.bankName?.toUpperCase() ?? 'NOT CONFIGURED'),
+                _buildModernTile(Icons.tag, 'ACCOUNT NO', (_partner?.bankAccountNo == null || _partner?.bankAccountNo == '0' || _partner?.bankAccountNo == '') ? 'NOT CONFIGURED' : _partner!.bankAccountNo),
+                _buildModernTile(Icons.payments, 'BRANCH / TYPE', _partner?.bankBranch?.toUpperCase() ?? 'NOT CONFIGURED'),
+              ],
+            ),
+            const SizedBox(height: 24),
+            if (_partner?.remarks != null && _partner!.remarks.isNotEmpty && _partner!.remarks != '-') ...[
+              _buildInfoSection(
+                'ACCOUNT REMARKS',
+                [
+                  _buildModernTile(Icons.notes, 'REMARKS', _partner!.remarks.toUpperCase()),
+                ],
+              ),
+              const SizedBox(height: 24),
             ],
-          ),
-          const SizedBox(height: 40),
-          _buildActionButton('EDIT PROFILE', Icons.edit_note, () async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => EditProfilePage(partner: _partner!)),
-            );
-            
-            print("DEBUG: Edit Profile result: $result");
-            
-            if (result is Partner) {
-              setState(() {
-                _partner = result;
-              });
-              if (widget.onProfileUpdated != null) widget.onProfileUpdated!();
-            }
-          }),
-          const SizedBox(height: 12),
-          _buildActionButton('LOGOUT', Icons.power_settings_new, () async {
-             // Clear session on logout
-             await SessionManager.clearSession();
-             if (mounted) {
-               Navigator.of(context).pushAndRemoveUntil(
-                 MaterialPageRoute(builder: (context) => const LoginPage()),
-                 (route) => false
-               );
-             }
-          }, isDestructive: true),
-          const SizedBox(height: 40),
-        ],
+            const SizedBox(height: 16),
+            _buildActionButton('EDIT PROFILE', Icons.edit_note, () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => EditProfilePage(partner: _partner!)),
+              );
+              
+              if (result != null) {
+                // Always re-fetch from server to ensure 100% sync
+                _fetchPartnerData();
+                if (widget.onProfileUpdated != null) widget.onProfileUpdated!();
+              }
+            }),
+            const SizedBox(height: 12),
+            _buildActionButton('LOGOUT', Icons.power_settings_new, () async {
+               // Clear session on logout
+               await SessionManager.clearSession();
+               if (mounted) {
+                 Navigator.of(context).pushAndRemoveUntil(
+                   MaterialPageRoute(builder: (context) => const LoginPage()),
+                   (route) => false
+                 );
+               }
+            }, isDestructive: true),
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,8 @@
 <?php
 require_once "cors_headers.php";
-// ROBUST PRODUCTION REGISTRATION - WITH PATH FIX
+
+// ROBUST PRODUCTION REGISTRATION - ALIGNED WITH SCHEMA
+header('Content-Type: application/json');
 
 if (file_exists('db/db_config.php')) {
     require_once 'db/db_config.php';
@@ -15,9 +17,15 @@ $last_name = $_REQUEST['last_name'] ?? '';
 $c_code = $_REQUEST['c_code'] ?? '';
 $mobile_no = $_REQUEST['mobile_no'] ?? '';
 $email = $_REQUEST['email'] ?? '';
-$bank_account_no = $_REQUEST['bank_account_no'] ?? '';
+$bank_account_no = $_REQUEST['bank_account_no'] ?? '0';
 $bank_name = $_REQUEST['bank_name'] ?? '';
-$bank_account_type = $_REQUEST['bank_account_type'] ?? '';
+$bank_ac_branch = $_REQUEST['bank_ac_branch'] ?? $_REQUEST['bank_account_type'] ?? '';
+$remarks = $_REQUEST['remarks'] ?? '';
+
+// Business Details (Optional at registration)
+$partner_type = $_REQUEST['partner_type'] ?? 'freelancer';
+$nic_number = $_REQUEST['nic_number'] ?? null;
+$business_name = $_REQUEST['business_name'] ?? null;
 
 if (empty($mobile_no) || empty($first_name) || empty($last_name)) {
     die(json_encode(["success" => false, "message" => "Required fields are missing"]));
@@ -31,18 +39,22 @@ try {
     $existing = $check->get_result()->fetch_assoc();
 
     if ($existing) {
-        // Just return the existing partner if they try to sign up again
-        echo json_encode([
-            "success" => true, 
-            "message" => "Mobile number already registered",
-            "data" => $existing
-        ]);
-        exit;
+        die(json_encode(["success" => false, "message" => "Mobile number already registered"]));
     }
 
-    // 2. Insert new partner
-    $stmt = $conn->prepare("INSERT INTO partners (first_name, last_name, c_code, mobile_no, email, bank_account_no, bank_name, bank_account_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssssss", $first_name, $last_name, $c_code, $mobile_no, $email, $bank_account_no, $bank_name, $bank_account_type);
+    // 2. Insert new partner - INCLUDING EXTENDED COLUMNS
+    $sql = "INSERT INTO partners (
+                first_name, last_name, c_code, mobile_no, email,
+                bank_account_no, bank_name, bank_ac_branch, remarks,
+                partner_type, nic_number, business_name
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssssssssssss",
+        $first_name, $last_name, $c_code, $mobile_no, $email,
+        $bank_account_no, $bank_name, $bank_ac_branch, $remarks,
+        $partner_type, $nic_number, $business_name
+    );
 
     if ($stmt->execute()) {
         $partner_id = $conn->insert_id;
@@ -65,16 +77,20 @@ try {
         $insert_sql = "INSERT INTO web_codes (u_Id, otp_code, time, status) VALUES ('$mobile_no', $otp, '$now', 0)";
 
         if ($conn->query($insert_sql)) {
-            require_once 'sendSms_xpartner.php';
-            $country_code = ($c_code && $c_code != '0') ? $c_code : '94';
-            $full_mobile = $country_code . ltrim($mobile_no, '0');
-
-            $msg = "Welcome to xPower Partners! Your OTP is: $otp";
-            sendSMSF($msg, $full_mobile, "Mahallah360", "PartnerRegistration", "partners", $first_name, $conn);
+            // Optional: Include SMS logic if sendSms_xpartner.php exists
+            if (file_exists('sendSms_xpartner.php')) {
+                require_once 'sendSms_xpartner.php';
+                $country_code = ($c_code && $c_code != '0') ? $c_code : '94';
+                $full_mobile = $country_code . ltrim($mobile_no, '0');
+                $msg = "Welcome to xPower Partners! Your OTP is: $otp";
+                if (function_exists('sendSMSF')) {
+                   sendSMSF($msg, $full_mobile, "Mahallah360", "PartnerRegistration", "partners", $first_name, $conn);
+                }
+            }
 
             echo json_encode([
                 "success" => true,
-                "message" => "Partner registered and OTP sent via SMS",
+                "message" => "Partner registered and OTP generated",
                 "data" => $partner_data,
                 "debug_otp" => $otp
             ]);
