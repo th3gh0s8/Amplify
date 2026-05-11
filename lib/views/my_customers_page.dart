@@ -288,6 +288,8 @@ class _MyCustomersPageState extends State<MyCustomersPage> {
                     _buildDetailRow('Phone', client.adminNumber),
                     const SizedBox(height: 24),
                     _buildSectionTitle('ADDITIONAL DETAILS'),
+                    _buildDetailRow('Preferred Language', client.preferredLang),
+                    _buildDetailRow('Reference Source', client.reference),
                     _buildDetailRow('Features', client.additionalFeatures),
                     _buildDetailRow('Remarks', client.remarks),
                     const SizedBox(height: 40),
