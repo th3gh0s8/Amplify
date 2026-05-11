@@ -73,8 +73,6 @@ class _DashboardViewState extends State<DashboardView> {
             const SizedBox(height: 32),
             _buildStatsGrid(),
             const SizedBox(height: 32),
-            _buildQuickActions(),
-            const SizedBox(height: 32),
             _buildLevelProgress(),
 
             const SizedBox(height: 40),
@@ -85,70 +83,6 @@ class _DashboardViewState extends State<DashboardView> {
             const SizedBox(height: 16),
             _buildInvoicesList(),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickActions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'QUICK ACTIONS',
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.black38),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionCard(
-                'PRODUCT CATALOG',
-                Icons.inventory_2_rounded,
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ResellPackagesPage()),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionCard(String label, IconData icon, VoidCallback onTap) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.black.withOpacity(0.05), width: 1),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.03),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 20, color: Colors.black),
-              ),
-              const SizedBox(width: 16),
-              Text(
-                label,
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
-              ),
-              const Spacer(),
-              const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.black26),
-            ],
-          ),
         ),
       ),
     );

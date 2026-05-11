@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import '../models/customer.dart';
 import '../services/api_service.dart';
+import '../models/resell_package.dart';
 
 class AddCustomerPage extends StatefulWidget {
   final String phoneNumber;
@@ -26,8 +27,39 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
   final TextEditingController _comFieldController = TextEditingController();
   final TextEditingController _remarksController = TextEditingController();
   final TextEditingController _featuresController = TextEditingController();
+  final TextEditingController _discountController = TextEditingController();
+  final TextEditingController _finalAmountController = TextEditingController();
+  
   String? _selectedReference;
   String _selectedLang = 'English';
+
+  List<ResellPackage> _availablePackages = [];
+  ResellPackage? _selectedPackage;
+  List<ResellPackageModule> _selectedModules = [];
+
+  double get _packageAmount => _selectedPackage?.packageAmount ?? 0.0;
+  double get _modulesAmount => _selectedModules.fold(0, (sum, m) => sum + m.modulePrice);
+  double get _totalBeforeDiscount => _packageAmount + _modulesAmount;
+  double get _discountValue => _totalBeforeDiscount * (double.tryParse(_discountController.text) ?? 0) / 100;
+  double get _calculatedTotal => _totalBeforeDiscount - _discountValue;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPackages();
+    _discountController.addListener(_updateFinalAmount);
+  }
+
+  Future<void> _fetchPackages() async {
+    final packages = await _apiService.getPackages();
+    setState(() => _availablePackages = packages);
+  }
+
+  void _updateFinalAmount() {
+    setState(() {
+      _finalAmountController.text = _calculatedTotal.toStringAsFixed(2);
+    });
+  }
 
   final List<String> _langOptions = [
     'English',
@@ -77,6 +109,188 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
     }
   }
 
+  Widget _buildPackageDetailsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('PACKAGE DETAILS'),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<ResellPackage>(
+          value: _selectedPackage,
+          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Colors.black),
+          decoration: InputDecoration(
+            labelText: 'SELECT PACKAGE',
+            labelStyle: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
+            prefixIcon: const Icon(Icons.inventory_2_outlined, size: 18, color: Colors.black),
+            filled: true,
+            fillColor: Colors.black.withOpacity(0.03),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          ),
+          items: _availablePackages.map((ResellPackage pkg) {
+            return DropdownMenuItem<ResellPackage>(
+              value: pkg,
+              child: Text(pkg.packageName.toUpperCase(), style: const TextStyle(fontSize: 11)),
+            );
+          }).toList(),
+          onChanged: (ResellPackage? newValue) {
+            setState(() {
+              _selectedPackage = newValue;
+              _selectedModules = [];
+              _updateFinalAmount();
+            });
+          },
+          validator: (value) => value == null ? 'REQUIRED' : null,
+        ),
+        if (_selectedPackage != null && _selectedPackage!.modules.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          Text(
+            'ADDITIONAL MODULES',
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1, color: Colors.black.withOpacity(0.4)),
+          ),
+          const SizedBox(height: 12),
+          ..._selectedPackage!.modules.map((m) => _buildModuleCheckbox(m)),
+        ],
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              child: _buildTextField(_discountController, 'DISCOUNT %', Icons.percent, isNumber: true, isOptional: true),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _finalAmountController,
+                readOnly: true,
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'FINAL AMOUNT',
+                  labelStyle: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
+                  prefixIcon: const Icon(Icons.payments_outlined, size: 18, color: Colors.black),
+                  filled: true,
+                  fillColor: Colors.black.withOpacity(0.03),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (_selectedPackage != null) ...[
+          const SizedBox(height: 32),
+          _buildPriceBreakdown(),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildModuleCheckbox(ResellPackageModule module) {
+    bool isSelected = _selectedModules.any((m) => m.id == module.id);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            if (isSelected) {
+              _selectedModules.removeWhere((m) => m.id == module.id);
+            } else {
+              _selectedModules.add(module);
+            }
+            _updateFinalAmount();
+          });
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.black : Colors.black.withOpacity(0.02),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: isSelected ? Colors.black : Colors.black.withOpacity(0.05)),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                size: 18,
+                color: isSelected ? Colors.white : Colors.black38,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  module.moduleName.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: isSelected ? Colors.white : Colors.black87,
+                  ),
+                ),
+              ),
+              Text(
+                'LKR ${module.modulePrice.toStringAsFixed(0)}',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: isSelected ? Colors.white70 : Colors.black38,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPriceBreakdown() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          _buildBreakdownRow('Package', _packageAmount),
+          if (_selectedModules.isNotEmpty)
+            _buildBreakdownRow('Additional Modules', _modulesAmount),
+          _buildBreakdownRow('Discount (${_discountController.text.isEmpty ? "0" : _discountController.text}%)', -_discountValue),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(color: Colors.white24, height: 1),
+          ),
+          _buildBreakdownRow('Total', _calculatedTotal, isTotal: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBreakdownRow(String label, double amount, {bool isTotal = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              fontSize: isTotal ? 12 : 9,
+              fontWeight: FontWeight.w900,
+              color: isTotal ? Colors.white : Colors.white38,
+              letterSpacing: 1,
+            ),
+          ),
+          Text(
+            'LKR ${amount.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: isTotal ? 16 : 11,
+              fontWeight: FontWeight.w900,
+              color: isTotal ? Colors.white : Colors.white70,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
     
@@ -107,7 +321,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
         companyArea: _comAreaController.text,
         companyField: _comFieldController.text,
         remarks: _remarksController.text,
-        additionalFeatures: _featuresController.text,
+        additionalFeatures: _formatFeaturesString(),
         reference: _selectedReference ?? '',
         preferredLang: _selectedLang,
       );
@@ -134,6 +348,17 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  String _formatFeaturesString() {
+    String features = _featuresController.text;
+    if (_selectedPackage != null) {
+      String pkgInfo = "\n\nPACKAGE: ${_selectedPackage!.packageName}"
+                      "\nMODULES: ${_selectedModules.map((m) => m.moduleName).join(', ')}"
+                      "\nTOTAL: LKR ${_calculatedTotal.toStringAsFixed(2)}";
+      features += pkgInfo;
+    }
+    return features;
   }
 
   @override
@@ -181,6 +406,9 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                   const SizedBox(height: 16),
                   _buildPhoneField(_adminNumberController, 'OWNER NUMBER'),
                   
+                  const SizedBox(height: 32),
+                  _buildPackageDetailsSection(),
+
                   const SizedBox(height: 32),
                   _buildSectionTitle('ADDITIONAL DETAILS'),
                   const SizedBox(height: 16),
@@ -386,6 +614,8 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
     _comFieldController.dispose();
     _remarksController.dispose();
     _featuresController.dispose();
+    _discountController.dispose();
+    _finalAmountController.dispose();
     super.dispose();
   }
 }
