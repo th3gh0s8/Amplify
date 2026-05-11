@@ -161,50 +161,170 @@ class _MyCustomersPageState extends State<MyCustomersPage> {
         final client = list[index];
         bool isApproved = client.status == 'APPROVED';
         
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.02),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.black.withOpacity(0.05)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      client.companyName.toUpperCase(),
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: -0.2),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isApproved ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      client.status,
-                      style: TextStyle(
-                        fontSize: 9, 
-                        fontWeight: FontWeight.w900, 
-                        color: isApproved ? Colors.green : Colors.orange
+        return GestureDetector(
+          onTap: () => _showCustomerDetails(client),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.02),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.black.withOpacity(0.05)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              client.companyName.toUpperCase(),
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: -0.2),
+                            ),
+                          ),
+                          if (isApproved) ...[
+                            const SizedBox(width: 6),
+                            const Icon(Icons.verified, size: 16, color: Colors.blue),
+                          ] else ...[
+                            const SizedBox(width: 6),
+                            const Icon(Icons.pending, size: 16, color: Colors.orange),
+                          ],
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              _buildDetailItem(Icons.location_on_outlined, client.companyAddress),
-              _buildDetailItem(Icons.phone_android_outlined, client.companyNumber),
-              _buildDetailItem(Icons.person_outline, client.adminName),
-            ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isApproved ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        client.status,
+                        style: TextStyle(
+                          fontSize: 9, 
+                          fontWeight: FontWeight.w900, 
+                          color: isApproved ? Colors.green : Colors.orange
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildDetailItem(Icons.location_on_outlined, client.companyAddress),
+                _buildDetailItem(Icons.phone_android_outlined, client.companyNumber),
+                _buildDetailItem(Icons.person_outline, client.adminName),
+              ],
+            ),
           ),
         );
       },
+    );
+  }
+
+  void _showCustomerDetails(Customer client) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.black12,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            client.companyName.toUpperCase(),
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.5),
+                          ),
+                        ),
+                        if (client.status == 'APPROVED')
+                          const Icon(Icons.verified, color: Colors.blue, size: 24),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'STATUS: ${client.status}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 10,
+                        color: client.status == 'APPROVED' ? Colors.green : Colors.orange,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    _buildSectionTitle('COMPANY INFORMATION'),
+                    _buildDetailRow('Address', client.companyAddress),
+                    _buildDetailRow('Phone', client.companyNumber),
+                    _buildDetailRow('Area', client.companyArea),
+                    _buildDetailRow('Field/Industry', client.companyField),
+                    const SizedBox(height: 24),
+                    _buildSectionTitle('ADMIN CONTACT'),
+                    _buildDetailRow('Name', client.adminName),
+                    _buildDetailRow('Phone', client.adminNumber),
+                    const SizedBox(height: 24),
+                    _buildSectionTitle('ADDITIONAL DETAILS'),
+                    _buildDetailRow('Features', client.additionalFeatures),
+                    _buildDetailRow('Remarks', client.remarks),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1, color: Colors.black38),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label.toUpperCase(), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black26)),
+          const SizedBox(height: 4),
+          Text(
+            value.isEmpty ? 'N/A' : value,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.black87),
+          ),
+        ],
+      ),
     );
   }
 
