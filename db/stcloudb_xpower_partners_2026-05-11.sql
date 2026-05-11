@@ -335,7 +335,7 @@ CREATE TABLE `new_clients` (
   `additional_features` varchar(225) NOT NULL,
   `rDateTime` datetime NOT NULL,
   `status` enum('pending','active') NOT NULL DEFAULT 'pending',
-  `reference` enum('Social Media Promotion','Customer Called me','From Cold Calling','From Visiting','From an Existing Client') DEFAULT NULL,
+  `reference` enum('From a Friend','Social Media Promotion','Customer Called me','From Cold Calling','From Visiting','From an Existing Client') DEFAULT NULL,
   PRIMARY KEY (`ID`),
   KEY `fk_new_clients_partner` (`partnerTb`),
   CONSTRAINT `fk_new_clients_partner` FOREIGN KEY (`partnerTb`) REFERENCES `partners` (`ID`) ON DELETE CASCADE ON UPDATE CASCADE
