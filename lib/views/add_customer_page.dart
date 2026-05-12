@@ -109,6 +109,22 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
     }
   }
 
+  void _showDescriptionDialog(BuildContext context, String title, String description) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+        content: Text(description.isNotEmpty ? description : 'NO DESCRIPTION AVAILABLE'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('CLOSE'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPackageDetailsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,6 +142,12 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
             fillColor: Colors.black.withOpacity(0.03),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            suffixIcon: _selectedPackage != null 
+              ? IconButton(
+                  icon: const Icon(Icons.info_outline, size: 18, color: Colors.blue),
+                  onPressed: () => _showDescriptionDialog(context, _selectedPackage!.packageName, _selectedPackage!.description),
+                )
+              : null,
           ),
           items: _availablePackages.map((ResellPackage pkg) {
             return DropdownMenuItem<ResellPackage>(
@@ -149,13 +171,23 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1, color: Colors.black.withOpacity(0.4)),
           ),
           const SizedBox(height: 12),
-          SizedBox(
+          Container(
             height: 250,
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  ..._selectedPackage!.modules.map((m) => _buildModuleCheckbox(m)),
-                ],
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.02),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.black.withOpacity(0.1)),
+            ),
+            child: Scrollbar(
+              thumbVisibility: true,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Column(
+                  children: [
+                    ..._selectedPackage!.modules.map((m) => _buildModuleCheckbox(m)),
+                  ],
+                ),
               ),
             ),
           ),
@@ -233,6 +265,10 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                     color: isSelected ? Colors.white : Colors.black87,
                   ),
                 ),
+              ),
+              IconButton(
+                icon: Icon(Icons.info_outline, size: 16, color: isSelected ? Colors.white70 : Colors.black38),
+                onPressed: () => _showDescriptionDialog(context, module.moduleName, module.moduleDescription),
               ),
               Text(
                 'LKR ${module.modulePrice.toStringAsFixed(0)}',
