@@ -61,15 +61,16 @@ $reference = $_POST['reference'] ?? '';
 $preferred_lang = $_POST['preferred_lang'] ?? 'English';
 $package_name = $_POST['package_name'] ?? NULL;
 $additional_packages = $_POST['additional_packages'] ?? NULL;
+$discount = $_POST['discount'] ?? 0;
 
 $status = 'Pending';
 $rDateTime = date('Y-m-d H:i:s');
 
-$sql = "INSERT INTO new_clients (partnerTb, com_name, com_address, com_number, admin_name, admin_number, com_area, com_field, remarks, additional_features, status, rDateTime, reference, preferred_lang, package_name, additional_packages)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+$sql = "INSERT INTO new_clients (partnerTb, com_name, com_address, com_number, admin_name, admin_number, com_area, com_field, remarks, additional_features, status, rDateTime, reference, preferred_lang, package_name, additional_packages, discount)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("ssssssssssssssss", $partner_identifier, $com_name, $com_address, $com_number, $admin_name, $admin_number, $com_area, $com_field, $remarks, $additional_features, $status, $rDateTime, $reference, $preferred_lang, $package_name, $additional_packages);
+$stmt->bind_param("sssssssssssssssss", $partner_identifier, $com_name, $com_address, $com_number, $admin_name, $admin_number, $com_area, $com_field, $remarks, $additional_features, $status, $rDateTime, $reference, $preferred_lang, $package_name, $additional_packages, $discount);
 
 if ($stmt->execute()) {
     echo json_encode(['success' => true, 'message' => 'Customer registered successfully']);

@@ -149,7 +149,16 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1, color: Colors.black.withOpacity(0.4)),
           ),
           const SizedBox(height: 12),
-          ..._selectedPackage!.modules.map((m) => _buildModuleCheckbox(m)),
+          SizedBox(
+            height: 250,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  ..._selectedPackage!.modules.map((m) => _buildModuleCheckbox(m)),
+                ],
+              ),
+            ),
+          ),
         ],
         const SizedBox(height: 24),
         Row(
@@ -326,6 +335,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
         preferredLang: _selectedLang,
         packageName: _selectedPackage?.packageName,
         additionalPackages: _selectedModules.map((m) => m.moduleName).join(','),
+        discount: double.tryParse(_discountController.text) ?? 0.0,
       );
 
       // Pass the phone number directly to the API service

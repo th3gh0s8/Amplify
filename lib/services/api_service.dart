@@ -270,6 +270,7 @@ class ApiService {
         'preferred_lang': customer.preferredLang,
         'package_name': customer.packageName ?? '',
         'additional_packages': customer.additionalPackages ?? '',
+        'discount': customer.discount?.toString() ?? '0',
       });
 
       request.files.add(await http.MultipartFile.fromPath(

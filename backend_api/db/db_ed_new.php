@@ -914,7 +914,12 @@ function build_url($page, $limit, $search) {
                     </div>
                 </div>
 
-                <div class="table-responsive flex-grow-1 border-0" id="view-data">
+                <!-- Top Scroller -->
+                <div id="top-scroll-track" style="overflow-x: auto; overflow-y: hidden; height: 16px; background: #eee; cursor: pointer; border-top: 1px solid #ddd; margin-bottom: 2px;" onscroll="document.getElementById('view-data').scrollLeft = this.scrollLeft">
+                    <div id="top-scroll-content" style="height: 1px;"></div>
+                </div>
+
+                <div class="table-responsive flex-grow-1 border-0" id="view-data" onscroll="document.getElementById('top-scroll-track').scrollLeft = this.scrollLeft">
                     <table class="table table-hover table-bordered table-striped mb-0" style="font-size: 0.9rem;">
                         <thead class="table-light">
                             <tr>
@@ -960,6 +965,14 @@ function build_url($page, $limit, $search) {
                     </table>
                 </div>
                 </form>
+
+                <script>
+                    window.addEventListener('load', function() {
+                        const table = document.querySelector('#view-data table');
+                        const content = document.getElementById('top-scroll-content');
+                        if (table) content.style.width = table.offsetWidth + 'px';
+                    });
+                </script>
 
                 <!-- Hidden single delete forms to avoid nested form issues -->
                 <?php if(!empty($rows)): foreach($rows as $row): if($primary_key): ?>

@@ -15,6 +15,7 @@ class Customer {
   final String preferredLang;
   final String? packageName;
   final String? additionalPackages;
+  final double? discount;
 
   Customer({
     this.id,
@@ -33,6 +34,7 @@ class Customer {
     this.preferredLang = 'English',
     this.packageName,
     this.additionalPackages,
+    this.discount,
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) {
@@ -57,6 +59,7 @@ class Customer {
       preferredLang: safeString(json['preferred_lang']).isEmpty ? 'English' : safeString(json['preferred_lang']),
       packageName: safeString(json['package_name']),
       additionalPackages: safeString(json['additional_packages']),
+      discount: double.tryParse(json['discount']?.toString() ?? '0'),
     );
   }
 
@@ -76,6 +79,7 @@ class Customer {
       'preferred_lang': preferredLang,
       'package_name': packageName,
       'additional_packages': additionalPackages,
+      'discount': discount,
     };
   }
 }
