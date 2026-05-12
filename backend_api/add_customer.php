@@ -62,12 +62,14 @@ $preferred_lang = $_POST['preferred_lang'] ?? 'English';
 $package_name = $_POST['package_name'] ?? NULL;
 $additional_packages = $_POST['additional_packages'] ?? NULL;
 
+$status = 'Pending';
+$rDateTime = date('Y-m-d H:i:s');
+
 $sql = "INSERT INTO new_clients (partnerTb, com_name, com_address, com_number, admin_name, admin_number, com_area, com_field, remarks, additional_features, status, rDateTime, reference, preferred_lang, package_name, additional_packages)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW(), ?, ?, ?, ?)";
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = $conn->prepare($sql);
-// We bind as 's' (string) because partnerTb might be an ID or a mobile number
-$stmt->bind_param("ssssssssssssssss", $partner_identifier, $com_name, $com_address, $com_number, $admin_name, $admin_number, $com_area, $com_field, $remarks, $additional_features, $reference, $preferred_lang, $package_name, $additional_packages);
+$stmt->bind_param("ssssssssssssssss", $partner_identifier, $com_name, $com_address, $com_number, $admin_name, $admin_number, $com_area, $com_field, $remarks, $additional_features, $status, $rDateTime, $reference, $preferred_lang, $package_name, $additional_packages);
 
 if ($stmt->execute()) {
     echo json_encode(['success' => true, 'message' => 'Customer registered successfully']);
