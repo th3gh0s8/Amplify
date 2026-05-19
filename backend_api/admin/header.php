@@ -22,6 +22,7 @@ check_auth();
             <a class="nav-link" href="index.php">Dashboard</a>
             <a class="nav-link" href="partners.php">Partners</a>
             <a class="nav-link" href="customers.php">Customers</a>
+            <a class="nav-link" href="invoices.php">Invoices</a>
         </div>
         <div class="navbar-nav">
             <a class="nav-link" href="logout.php">Logout</a>
