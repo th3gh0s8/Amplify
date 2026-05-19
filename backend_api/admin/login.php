@@ -1,38 +1,33 @@
 <?php
 require_once 'db.php';
 
-// Auto-create admin table if missing
-$conn->query("CREATE TABLE IF NOT EXISTS admins (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL
-)");
-
-// Insert default admin if table empty
-$res = $conn->query("SELECT id FROM admins LIMIT 1");
-if ($res->num_rows == 0) {
-    $pass = password_hash('password123', PASSWORD_DEFAULT);
-    $conn->query("INSERT INTO admins (username, password) VALUES ('admin', '$pass')");
+// Auto-insert default admin if table empty (for users table)
+$res = $conn->query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
+if ($res && $res->num_rows == 0) {
+    $pass = password_hash('lxd6Z967', PASSWORD_DEFAULT);
+    $conn->query("INSERT INTO users (email, password_hash, first_name, role, is_active, is_verified) 
+                  VALUES ('admin@xpower.com', '$pass', 'Admin', 'admin', 1, 1)");
 }
 
 $error = "";
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $user = $_POST['username'];
+    $email = $_POST['username']; // Using email as username
     $pass = $_POST['password'];
     
-    $stmt = $conn->prepare("SELECT id, password FROM admins WHERE username = ?");
-    $stmt->bind_param("s", $user);
+    $stmt = $conn->prepare("SELECT id, password_hash, role FROM users WHERE email = ? AND role = 'admin' AND is_active = 1");
+    $stmt->bind_param("s", $email);
     $stmt->execute();
     $res = $stmt->get_result();
     
     if ($row = $res->fetch_assoc()) {
-        if (password_verify($pass, $row['password'])) {
+        if (password_verify($pass, $row['password_hash'])) {
             $_SESSION['admin_id'] = $row['id'];
+            $_SESSION['admin_email'] = $email;
             header("Location: index.php");
             exit;
         }
     }
-    $error = "Invalid credentials";
+    $error = "Invalid credentials or not an admin";
 }
 ?>
 <!DOCTYPE html>
@@ -48,11 +43,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="card shadow">
                 <div class="card-header bg-primary text-white text-center">Admin Login</div>
                 <div class="card-body">
+                    <p class="small text-muted text-center">Use email to login</p>
                     <?php if($error): ?><div class="alert alert-danger"><?php echo $error; ?></div><?php endif; ?>
                     <form method="POST">
                         <div class="mb-3">
-                            <label>Username</label>
-                            <input type="text" name="username" class="form-control" required>
+                            <label>Email</label>
+                            <input type="email" name="username" class="form-control" placeholder="admin@xpower.com" required>
                         </div>
                         <div class="mb-3">
                             <label>Password</label>
