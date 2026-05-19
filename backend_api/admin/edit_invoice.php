@@ -136,7 +136,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function filterCustomers() {
         const partnerId = partnerSelect.value;
         const options = customerSelect.options;
-        let visibleCount = 0;
         
         for (let i = 0; i < options.length; i++) {
             const opt = options[i];
@@ -145,9 +144,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 continue;
             }
             
-            if (partnerId === "" || opt.getAttribute('data-partner') === partnerId) {
+            // Only show if partnerId matches (and is not empty)
+            if (partnerId !== "" && opt.getAttribute('data-partner') === partnerId) {
                 opt.style.display = "";
-                visibleCount++;
             } else {
                 opt.style.display = "none";
                 if (opt.selected) {
