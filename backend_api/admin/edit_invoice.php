@@ -8,6 +8,24 @@ $is_new = isset($_GET['new']);
 $result_meta = $conn->query("SELECT * FROM invoices LIMIT 1");
 $fields = $result_meta->fetch_fields();
 
+// Reorder fields: move partner_tb before br_id
+$reordered = [];
+$p_idx = -1;
+$b_idx = -1;
+foreach($fields as $i => $f) {
+    if($f->name == 'partner_tb') $p_idx = $i;
+    if($f->name == 'br_id') $b_idx = $i;
+}
+
+if ($p_idx !== -1 && $b_idx !== -1) {
+    $p_field = $fields[$p_idx];
+    $temp_fields = array_values(array_filter($fields, fn($f) => $f->name !== 'partner_tb'));
+    // Find new br_id index
+    foreach($temp_fields as $i => $f) if($f->name == 'br_id') $b_idx = $i;
+    array_splice($temp_fields, $b_idx, 0, [$p_field]);
+    $fields = $temp_fields;
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [];
     foreach ($fields as $field) {
@@ -128,55 +146,81 @@ if (!$is_new && !$invoice) { echo "Invoice not found"; include 'footer.php'; exi
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const partnerSelect = document.getElementById('partner_tb_select');
-    const customerSelect = document.getElementById('cus_tb_select');
+    const partnerEl = document.getElementById('partner_tb_select');
+    const customerEl = document.getElementById('cus_tb_select');
     const nameInput = document.getElementById('cus_name_input');
     const valueInput = document.getElementById('value_input');
+
+    if (!partnerEl || !customerEl) return;
+
+    // Initialize Tom Select
+    const partnerTS = new TomSelect(partnerEl, { create: false });
     
+    // Map initial options correctly
+    const initialOptions = Array.from(customerEl.options).map(opt => ({
+        id: opt.value,
+        text: opt.text,
+        partner: opt.getAttribute('data-partner') || ""
+    }));
+
+    const customerTS = new TomSelect(customerEl, {
+        create: false,
+        valueField: 'id',
+        labelField: 'text',
+        searchField: 'text',
+        options: initialOptions
+    });
+
+    // Store the full set of options for filtering
+    const fullCustomerOptions = JSON.parse(JSON.stringify(customerTS.options));
+
     function filterCustomers() {
-        const partnerId = partnerSelect.value;
-        const options = customerSelect.options;
-        
-        for (let i = 0; i < options.length; i++) {
-            const opt = options[i];
-            if (opt.value === "") {
-                opt.style.display = "";
-                continue;
-            }
-            
-            // Only show if partnerId matches (and is not empty)
-            if (partnerId !== "" && opt.getAttribute('data-partner') === partnerId) {
-                opt.style.display = "";
-            } else {
-                opt.style.display = "none";
-                if (opt.selected) {
-                    customerSelect.value = "";
-                    if (nameInput) nameInput.value = "";
-                    if (valueInput) valueInput.value = "";
-                }
-            }
+        const partnerId = partnerTS.getValue();
+        const currentVal = customerTS.getValue();
+
+        // Toggle availability based on partner selection
+        if (partnerId === "") {
+            customerTS.disable();
+        } else {
+            customerTS.enable();
         }
+
+        // Clear current options and re-add filtered ones
+        customerTS.clearOptions();
+
+        const filtered = Object.values(fullCustomerOptions).filter(opt => {
+            if (opt.id === "") return true; // Keep placeholder
+            
+            // If no partner selected, normally we'd show none or all, 
+            // but user wants it unavailable. We keep all for when it IS enabled.
+            if (partnerId === "") return true;
+            
+            // If partner selected, show if partner matches OR if it's the currently selected customer
+            return String(opt.partner) === String(partnerId) || opt.id === currentVal;
+        });
+
+        customerTS.addOptions(filtered);
+        customerTS.refreshOptions(false);
     }
 
-    if (partnerSelect && customerSelect) {
-        partnerSelect.addEventListener('change', filterCustomers);
-        // Initial filter on load
+    partnerTS.on('change', function() {
+        customerTS.clear();
         filterCustomers();
-    }
+    });
     
-    if (customerSelect) {
-        customerSelect.addEventListener('change', function() {
-            const selectedId = this.value;
-            const data = customerData[selectedId];
-            if (data) {
-                if (nameInput) nameInput.value = data.name;
-                if (valueInput) valueInput.value = data.value;
-            } else {
-                if (nameInput) nameInput.value = '';
-                if (valueInput) valueInput.value = '';
-            }
-        });
-    }
+    customerTS.on('change', function(selectedId) {
+        const data = customerData[selectedId];
+        if (data) {
+            if (nameInput) nameInput.value = data.name;
+            if (valueInput) valueInput.value = data.value;
+        } else {
+            if (nameInput) nameInput.value = '';
+            if (valueInput) valueInput.value = '';
+        }
+    });
+
+    // Initial filter
+    filterCustomers();
 });
 </script>
 
