@@ -1,12 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/partner.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 import 'level_benefits_page.dart';
 import 'invoice_details_page.dart';
 import 'my_customers_page.dart';
-import 'resell_packages_page.dart';
 import 'notifications_page.dart';
 import '../utils/format_utils.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardView extends StatefulWidget {
   final String phoneNumber;
@@ -22,19 +24,47 @@ class _DashboardViewState extends State<DashboardView> {
   List<dynamic> _recentInvoices = [];
   Partner? _partner;
   bool _isLoading = true;
+  Timer? _pollingTimer;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _startPolling();
   }
 
-  Future<void> _loadData() async {
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startPolling() {
+    // Poll every 60 seconds for new notifications/data
+    _pollingTimer = Timer.periodic(const Duration(seconds: 60), (timer) {
+      _loadData(isSilent: true);
+    });
+  }
+
+  Future<void> _loadData({bool isSilent = false}) async {
     final mobileNo = widget.phoneNumber;
+    if (!isSilent && mounted) setState(() => _isLoading = true);
+    
     try {
       final data = await _apiService.getDashboardData(mobileNo);
       final invoices = await _apiService.getInvoices(mobileNo);
       final partner = await _apiService.getProfile(mobileNo);
+      
+      // Check for new notifications to show local alert if in app
+      if (data != null && data['unread_notifications'] != null) {
+        int currentUnread = int.tryParse(data['unread_notifications'].toString()) ?? 0;
+        int prevUnread = int.tryParse(_dashboardData?['unread_notifications']?.toString() ?? '0') ?? 0;
+        
+        if (currentUnread > prevUnread) {
+          _checkAndShowForegroundNotification();
+        }
+      }
+
       if (mounted) {
         setState(() {
           _dashboardData = data;
@@ -43,10 +73,28 @@ class _DashboardViewState extends State<DashboardView> {
           _isLoading = false;
         });
       }
-      print('DEBUG: Dashboard Data: $_dashboardData');
     } catch (e) {
-      print('DEBUG: Dashboard Load Error: $e');
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted && !isSilent) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _checkAndShowForegroundNotification() async {
+    final notifications = await _apiService.getNotifications(widget.phoneNumber);
+    if (notifications.isNotEmpty) {
+      final latest = notifications.first;
+      final latestId = int.tryParse(latest['id'].toString()) ?? 0;
+      
+      final prefs = await SharedPreferences.getInstance();
+      final lastNotified = prefs.getInt('last_notified_id') ?? 0;
+      
+      if (latestId > lastNotified) {
+        await NotificationService().showNotification(
+          id: latestId,
+          title: latest['title'].toString().toUpperCase(),
+          body: latest['message'].toString(),
+        );
+        await prefs.setInt('last_notified_id', latestId);
+      }
     }
   }
 

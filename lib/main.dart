@@ -1,12 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login_page.dart';
 import 'dashboard_page.dart';
 import 'services/session_manager.dart';
+import 'services/notification_service.dart';
+import 'services/api_service.dart';
 
-void main() {
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    print('DEBUG: Workmanager task started: $task');
+    try {
+      WidgetsFlutterBinding.ensureInitialized();
+      final phone = await SessionManager.getSession();
+      print('DEBUG: Background session phone: $phone');
+      
+      if (phone == null || phone.isEmpty) {
+        print('DEBUG: No phone number found in background session.');
+        return true;
+      }
+
+      final api = ApiService();
+      final notifications = await api.getNotifications(phone);
+      print('DEBUG: Background fetched ${notifications.length} notifications');
+
+      if (notifications.isNotEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        final lastSeenId = prefs.getInt('last_notified_id') ?? 0;
+        
+        final latest = notifications.first;
+        final latestId = int.tryParse(latest['id'].toString()) ?? 0;
+        print('DEBUG: Latest ID: $latestId, Last Seen: $lastSeenId');
+
+        if (latestId > lastSeenId) {
+          print('DEBUG: Triggering notification for ID $latestId');
+          final ns = NotificationService();
+          await ns.init();
+          await ns.showNotification(
+            id: latestId,
+            title: latest['title'].toString().toUpperCase(),
+            body: latest['message'].toString(),
+          );
+          await prefs.setInt('last_notified_id', latestId);
+        } else {
+          print('DEBUG: No new notifications since last check.');
+        }
+      }
+    } catch (e) {
+      print('DEBUG: Background task EXCEPTION: $e');
+    }
+    return true;
+  });
+}
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Init Notification Service
+  await NotificationService().init();
+
+  // Init Workmanager
+  await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+  
+  // Schedule periodic task
+  await Workmanager().registerPeriodicTask(
+    "1",
+    "fetch_notifications_task",
+    frequency: const Duration(minutes: 15),
+    constraints: Constraints(
+      networkType: NetworkType.connected,
+    ),
+  );
+
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,

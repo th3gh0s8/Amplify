@@ -7,7 +7,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/partner.dart';
-import '../models/web_code.dart';
 import '../models/invoice.dart';
 import '../models/payout_request.dart';
 

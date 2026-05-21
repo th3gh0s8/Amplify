@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 import 'package:intl/intl.dart';
 
 class NotificationsPage extends StatefulWidget {
@@ -46,6 +47,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
           style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1),
         ),
         actions: [
+          IconButton(
+            onPressed: () async {
+              await NotificationService().showNotification(
+                id: 999,
+                title: 'TEST NOTIFICATION',
+                body: 'If you see this, notifications are working!',
+              );
+            },
+            icon: const Icon(Icons.bug_report, size: 20),
+          ),
           IconButton(
             onPressed: _loadNotifications,
             icon: const Icon(Icons.refresh, size: 20),
