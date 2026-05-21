@@ -71,6 +71,18 @@ try {
     $level = $level_data['level_name'] ?? 'ASSOCIATE';
     $comm_rate = $level_data['profitPr_monthly'] ?? 10;
 
+    // 8. Unread Notifications Count
+    $stmtN = $conn->prepare("SELECT COUNT(n.id) as unread_count 
+                            FROM notifications n 
+                            WHERE (n.partner_id = 0 OR n.partner_id = ?) 
+                            AND NOT EXISTS (
+                                SELECT 1 FROM notification_reads nr 
+                                WHERE nr.notification_id = n.id AND nr.partner_id = ?
+                            )");
+    $stmtN->bind_param("ii", $partner_id, $partner_id);
+    $stmtN->execute();
+    $unread_count = (int)($stmtN->get_result()->fetch_assoc()['unread_count'] ?? 0);
+
     echo json_encode([
         "success" => true,
         "data" => [
@@ -80,7 +92,8 @@ try {
             "pending_payouts" => $pending_payouts,
             "total_customers" => $total_customers,
             "level" => $level,
-            "commission_rate" => $comm_rate . "%"
+            "commission_rate" => $comm_rate . "%",
+            "unread_notifications" => $unread_count
         ]
     ]);
 

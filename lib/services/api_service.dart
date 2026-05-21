@@ -251,6 +251,37 @@ class ApiService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getNotifications(String mobileNo) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/get_notifications.php?mobile_no=$mobileNo&t=${DateTime.now().millisecondsSinceEpoch}'),
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) return List<Map<String, dynamic>>.from(data['data']);
+      }
+    } catch (e) {
+      print('API Error (getNotifications): $e');
+    }
+    return [];
+  }
+
+  Future<bool> markNotificationsAsRead(String mobileNo) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/mark_notifications_read.php'),
+        body: {'mobile_no': mobileNo},
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['success'] == true;
+      }
+    } catch (e) {
+      print('API Error (markNotificationsAsRead): $e');
+    }
+    return false;
+  }
+
   Future<bool> addCustomer(Customer customer, File paymentSlip, {required String partnerMobile}) async {
     try {
       var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/add_customer.php'));

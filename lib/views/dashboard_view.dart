@@ -5,6 +5,7 @@ import 'level_benefits_page.dart';
 import 'invoice_details_page.dart';
 import 'my_customers_page.dart';
 import 'resell_packages_page.dart';
+import 'notifications_page.dart';
 import '../utils/format_utils.dart';
 
 class DashboardView extends StatefulWidget {
@@ -91,21 +92,61 @@ class _DashboardViewState extends State<DashboardView> {
 
   Widget _buildWelcomeSection() {
     bool hasPartner = _partner != null;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          hasPartner ? 'WELCOME BACK,' : 'WELCOME,',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1, color: Colors.black.withOpacity(0.4)),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              hasPartner ? 'WELCOME BACK,' : 'WELCOME,',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1, color: Colors.black.withOpacity(0.4)),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              hasPartner ? '${_partner!.firstName} ${_partner!.lastName}'.toUpperCase() : (_partner?.mobileNo ?? widget.phoneNumber),
+              style: TextStyle(
+                fontSize: hasPartner ? 28 : 20, 
+                fontWeight: FontWeight.w900, 
+                letterSpacing: hasPartner ? -1 : 0,
+                color: hasPartner ? Colors.black : Colors.black54,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          hasPartner ? '${_partner!.firstName} ${_partner!.lastName}'.toUpperCase() : (_partner?.mobileNo ?? widget.phoneNumber),
-          style: TextStyle(
-            fontSize: hasPartner ? 28 : 20, 
-            fontWeight: FontWeight.w900, 
-            letterSpacing: hasPartner ? -1 : 0,
-            color: hasPartner ? Colors.black : Colors.black54,
+        IconButton(
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => NotificationsPage(mobileNo: widget.phoneNumber)),
+          ).then((_) => _loadData()), // Refresh unread count when returning
+          icon: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.black.withOpacity(0.05)),
+                ),
+                child: const Icon(Icons.notifications_none_rounded, size: 24, color: Colors.black),
+              ),
+              if ((int.tryParse(_dashboardData?['unread_notifications']?.toString() ?? '0') ?? 0) > 0)
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    child: Text(
+                      '${_dashboardData!['unread_notifications']}',
+                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ],
