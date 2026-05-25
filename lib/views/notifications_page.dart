@@ -49,13 +49,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
         actions: [
           IconButton(
             onPressed: () async {
-              await NotificationService().showNotification(
-                id: 999,
-                title: 'TEST NOTIFICATION',
-                body: 'If you see this, notifications are working!',
-              );
+              await NotificationService().requestPermissions(context);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Permission request triggered')),
+                );
+              }
             },
-            icon: const Icon(Icons.bug_report, size: 20),
+            icon: const Icon(Icons.security, size: 20),
           ),
           IconButton(
             onPressed: _loadNotifications,

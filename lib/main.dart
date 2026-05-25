@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,13 +28,11 @@ void callbackDispatcher() {
         int lastSeenId = prefs.getInt('last_notified_id') ?? 0;
         int maxIdSeen = lastSeenId;
         
-        // Filter and show all notifications newer than lastSeenId
         final newNotifications = notifications.where((n) {
           final id = int.tryParse(n['id'].toString()) ?? 0;
           return id > lastSeenId;
         }).toList();
 
-        // Sort by ID ascending to show in order
         newNotifications.sort((a, b) {
           final idA = int.tryParse(a['id'].toString()) ?? 0;
           final idB = int.tryParse(b['id'].toString()) ?? 0;
@@ -42,8 +41,7 @@ void callbackDispatcher() {
 
         if (newNotifications.isNotEmpty) {
           final ns = NotificationService();
-          await ns.init();
-          
+          // We don't init() here again to avoid context issues in background
           for (var n in newNotifications) {
             final id = int.tryParse(n['id'].toString()) ?? 0;
             await ns.showNotification(
@@ -70,9 +68,8 @@ void main() async {
   await NotificationService().init();
 
   // Init Workmanager
-  await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+  await Workmanager().initialize(callbackDispatcher);
   
-  // Schedule periodic task with replacement to ensure it stays active
   await Workmanager().registerPeriodicTask(
     "xpower_notification_fetch",
     "fetch_notifications_task",
@@ -94,8 +91,53 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  Timer? _foregroundTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startForegroundPolling();
+  }
+
+  void _startForegroundPolling() {
+    // Check every 20 seconds while app is in foreground
+    _foregroundTimer = Timer.periodic(const Duration(seconds: 20), (timer) async {
+      final phone = await SessionManager.getSession();
+      if (phone != null && phone.isNotEmpty) {
+        final api = ApiService();
+        final notifications = await api.getNotifications(phone);
+
+        if (notifications.isNotEmpty) {
+          final prefs = await SharedPreferences.getInstance();
+          final lastSeenId = prefs.getInt('last_notified_id') ?? 0;
+          final latestId = int.tryParse(notifications.first['id'].toString()) ?? 0;
+
+          if (latestId > lastSeenId) {
+            await NotificationService().showNotification(
+              id: latestId,
+              title: notifications.first['title'].toString().toUpperCase(),
+              body: notifications.first['message'].toString(),
+            );
+            await prefs.setInt('last_notified_id', latestId);
+          }
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _foregroundTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -114,6 +156,10 @@ class MyApp extends StatelessWidget {
         home: FutureBuilder<String?>(
           future: SessionManager.getSession(),
           builder: (context, snapshot) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              NotificationService().requestPermissions(context);
+            });
+
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
                 body: Center(child: CircularProgressIndicator(color: Colors.black)),
