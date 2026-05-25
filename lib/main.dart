@@ -16,37 +16,44 @@ void callbackDispatcher() {
     try {
       WidgetsFlutterBinding.ensureInitialized();
       final phone = await SessionManager.getSession();
-      print('DEBUG: Background session phone: $phone');
       
-      if (phone == null || phone.isEmpty) {
-        print('DEBUG: No phone number found in background session.');
-        return true;
-      }
+      if (phone == null || phone.isEmpty) return true;
 
       final api = ApiService();
       final notifications = await api.getNotifications(phone);
-      print('DEBUG: Background fetched ${notifications.length} notifications');
 
       if (notifications.isNotEmpty) {
         final prefs = await SharedPreferences.getInstance();
-        final lastSeenId = prefs.getInt('last_notified_id') ?? 0;
+        int lastSeenId = prefs.getInt('last_notified_id') ?? 0;
+        int maxIdSeen = lastSeenId;
         
-        final latest = notifications.first;
-        final latestId = int.tryParse(latest['id'].toString()) ?? 0;
-        print('DEBUG: Latest ID: $latestId, Last Seen: $lastSeenId');
+        // Filter and show all notifications newer than lastSeenId
+        final newNotifications = notifications.where((n) {
+          final id = int.tryParse(n['id'].toString()) ?? 0;
+          return id > lastSeenId;
+        }).toList();
 
-        if (latestId > lastSeenId) {
-          print('DEBUG: Triggering notification for ID $latestId');
+        // Sort by ID ascending to show in order
+        newNotifications.sort((a, b) {
+          final idA = int.tryParse(a['id'].toString()) ?? 0;
+          final idB = int.tryParse(b['id'].toString()) ?? 0;
+          return idA.compareTo(idB);
+        });
+
+        if (newNotifications.isNotEmpty) {
           final ns = NotificationService();
           await ns.init();
-          await ns.showNotification(
-            id: latestId,
-            title: latest['title'].toString().toUpperCase(),
-            body: latest['message'].toString(),
-          );
-          await prefs.setInt('last_notified_id', latestId);
-        } else {
-          print('DEBUG: No new notifications since last check.');
+          
+          for (var n in newNotifications) {
+            final id = int.tryParse(n['id'].toString()) ?? 0;
+            await ns.showNotification(
+              id: id,
+              title: n['title'].toString().toUpperCase(),
+              body: n['message'].toString(),
+            );
+            if (id > maxIdSeen) maxIdSeen = id;
+          }
+          await prefs.setInt('last_notified_id', maxIdSeen);
         }
       }
     } catch (e) {
@@ -65,11 +72,12 @@ void main() async {
   // Init Workmanager
   await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
   
-  // Schedule periodic task
+  // Schedule periodic task with replacement to ensure it stays active
   await Workmanager().registerPeriodicTask(
-    "1",
+    "xpower_notification_fetch",
     "fetch_notifications_task",
     frequency: const Duration(minutes: 15),
+    existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
     constraints: Constraints(
       networkType: NetworkType.connected,
     ),

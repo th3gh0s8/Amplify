@@ -38,6 +38,11 @@ class NotificationService {
     if (await Permission.notification.isDenied) {
       await Permission.notification.request();
     }
+    
+    // Request ignore battery optimizations for better background performance
+    if (await Permission.ignoreBatteryOptimizations.isDenied) {
+      await Permission.ignoreBatteryOptimizations.request();
+    }
   }
 
   Future<void> showNotification({
