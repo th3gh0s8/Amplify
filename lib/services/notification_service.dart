@@ -33,12 +33,17 @@ class NotificationService {
     );
   }
 
+  Future<bool> checkNotificationPermission() async {
+    final status = await Permission.notification.status;
+    return status.isGranted;
+  }
+
   Future<void> requestPermissions(BuildContext context) async {
     if (await Permission.notification.isDenied) {
       await Permission.notification.request();
     }
-    
-    // Custom dialog for battery optimization to make it look professional
+
+    // Custom dialog for battery optimization
     if (await Permission.ignoreBatteryOptimizations.isDenied) {
       if (context.mounted) {
         final bool? proceed = await showDialog<bool>(

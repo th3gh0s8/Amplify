@@ -154,8 +154,13 @@ class _MyAppState extends State<MyApp> {
         home: FutureBuilder<String?>(
           future: SessionManager.getSession(),
           builder: (context, snapshot) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              NotificationService().requestPermissions(context);
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              final service = NotificationService();
+              if (!(await service.checkNotificationPermission())) {
+                if (context.mounted) {
+                  service.requestPermissions(context);
+                }
+              }
             });
 
             if (snapshot.connectionState == ConnectionState.waiting) {

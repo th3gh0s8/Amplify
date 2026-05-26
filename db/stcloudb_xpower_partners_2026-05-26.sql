@@ -141,7 +141,7 @@ CREATE TABLE `login_activity` (
   `time` datetime NOT NULL,
   `status` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=193 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=205 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `login_activity` VALUES ('1', '772610398', '1', '2026-04-17 06:40:34', '1');
 INSERT INTO `login_activity` VALUES ('2', '772610398', 'login', '2026-04-17 07:13:08', '1');
@@ -332,6 +332,18 @@ INSERT INTO `login_activity` VALUES ('189', '8', '3', '2026-05-11 05:31:41', '1'
 INSERT INTO `login_activity` VALUES ('190', '7', '3', '2026-05-11 05:44:12', '1');
 INSERT INTO `login_activity` VALUES ('191', '1', '3', '2026-05-12 09:10:54', '1');
 INSERT INTO `login_activity` VALUES ('192', '7', '3', '2026-05-12 09:19:17', '1');
+INSERT INTO `login_activity` VALUES ('193', '7', '3', '2026-05-21 06:29:35', '1');
+INSERT INTO `login_activity` VALUES ('194', '1', '3', '2026-05-21 06:41:12', '1');
+INSERT INTO `login_activity` VALUES ('195', '7', '3', '2026-05-21 07:06:18', '1');
+INSERT INTO `login_activity` VALUES ('196', '7', '3', '2026-05-21 07:08:13', '1');
+INSERT INTO `login_activity` VALUES ('197', '7', '3', '2026-05-21 08:00:00', '1');
+INSERT INTO `login_activity` VALUES ('198', '7', '3', '2026-05-21 08:01:51', '1');
+INSERT INTO `login_activity` VALUES ('199', '7', '3', '2026-05-23 03:30:26', '1');
+INSERT INTO `login_activity` VALUES ('200', '1', '3', '2026-05-23 03:34:56', '1');
+INSERT INTO `login_activity` VALUES ('201', '7', '3', '2026-05-23 03:36:04', '1');
+INSERT INTO `login_activity` VALUES ('202', '7', '3', '2026-05-25 10:20:17', '1');
+INSERT INTO `login_activity` VALUES ('203', '1', '3', '2026-05-25 11:07:54', '1');
+INSERT INTO `login_activity` VALUES ('204', '1', '3', '2026-05-25 11:19:26', '1');
 
 
 CREATE TABLE `new_clients` (
@@ -357,7 +369,7 @@ CREATE TABLE `new_clients` (
   PRIMARY KEY (`ID`),
   KEY `fk_new_clients_partner` (`partnerTb`),
   CONSTRAINT `fk_new_clients_partner` FOREIGN KEY (`partnerTb`) REFERENCES `partners` (`ID`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=380 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=381 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `new_clients` VALUES ('119', '7', 'Uzumaki Ramen Co.', 'Hokage Tower, Sec 7', '1123456781', 'Naruto Uzumaki', '2147483647', 'Hidden Leaf Village', 'Food & Logistics', 'Fast delivery needed!', '', '2024-06-01 09:00:00', 'active', NULL, NULL, NULL, NULL, '0', '0.00');
 INSERT INTO `new_clients` VALUES ('120', '7', 'Akatsuki Tech', 'Base 7, Hidden Rain', '1123456782', 'Itachi Uchiha', '2147483647', 'Hidden Rain Village', 'Cloud Services', 'High security client', '', '2024-06-01 09:05:00', 'active', NULL, NULL, NULL, NULL, '0', '0.00');
@@ -620,6 +632,122 @@ INSERT INTO `new_clients` VALUES ('376', '7', 'Wayne Industries Pvt Ltd', 'Gotha
 INSERT INTO `new_clients` VALUES ('377', '7', 'Akatsuki', 'In the shadows ', '2147483647', 'Pain', '2147483647', 'Worldwide ', 'World Domination ', '', '\n\nPACKAGE: E-Commerce Website\nMODULES: \nTOTAL: LKR 4900.00', '2026-05-12 04:18:56', 'pending', 'Customer Called me', 'English', 'E-Commerce Website', '', '0', '99.00');
 INSERT INTO `new_clients` VALUES ('378', '7', 'Omen Soft', 'Srilanka ', '772610398', 'gh0s8', '772610398', 'Worldwide ', 'Software Engineering ', 'KKK', 'Profesional Website \n\nPACKAGE: E-Commerce Website\nMODULES: \nTOTAL: LKR 0.00', '2026-05-12 08:00:24', 'pending', 'Customer Called me', 'English', 'E-Commerce Website', '', '0', '100.00');
 INSERT INTO `new_clients` VALUES ('379', '7', 'Omen Software ', 'Srilanka', '702610398', 'gh0s8', '772610398', 'Worldwide ', 'Software Engineering ', 'KKK', 'SS\n\nPACKAGE: xPower Accounting Software\nMODULES: Barcode Printing, Order & Delivery, Purchase Order, Location Stock Management, TRCSL SMS Masking, Imei Management, Quotation, Promotion or Free Issue, Manufacture, My Cashier, ', '2026-05-12 08:03:45', 'active', 'Customer Called me', 'English', 'xPower Accounting Software', 'Barcode Printing,Order & Delivery,Purchase Order,Location Stock Management,TRCSL SMS Masking,Imei Management,Quotation,Promotion or Free Issue,Manufacture,My Cashier,Issue Item to Rep (Van Sales),Stock Audit,Rack Management,Branch Wise Report Filter,Repai', '0', '25.00');
+INSERT INTO `new_clients` VALUES ('380', '7', 'Ruby gemini ', 'Gemma ', '646494848', 'Ruby Gemma ', '698468675', 'Worldwide ', 'gemming', '', '\n\nPACKAGE: E-Commerce Website\nMODULES: \nTOTAL: LKR 441000.00', '2026-05-19 08:41:59', 'pending', 'Social Media Promotion', 'English', 'E-Commerce Website', '', '441000', '10.00');
+
+
+CREATE TABLE `notification_reads` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `notification_id` int(11) NOT NULL,
+  `partner_id` int(11) NOT NULL,
+  `read_at` datetime DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `notification_id` (`notification_id`,`partner_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=85 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+INSERT INTO `notification_reads` VALUES ('1', '1', '7', '2026-05-21 03:06:27');
+INSERT INTO `notification_reads` VALUES ('2', '3', '7', '2026-05-21 03:06:27');
+INSERT INTO `notification_reads` VALUES ('3', '6', '7', '2026-05-21 03:06:27');
+INSERT INTO `notification_reads` VALUES ('6', '7', '7', '2026-05-21 03:37:18');
+INSERT INTO `notification_reads` VALUES ('7', '8', '7', '2026-05-21 03:39:29');
+INSERT INTO `notification_reads` VALUES ('9', '9', '7', '2026-05-21 03:54:34');
+INSERT INTO `notification_reads` VALUES ('10', '10', '7', '2026-05-21 03:54:34');
+INSERT INTO `notification_reads` VALUES ('11', '11', '7', '2026-05-21 03:54:34');
+INSERT INTO `notification_reads` VALUES ('12', '12', '7', '2026-05-21 03:54:34');
+INSERT INTO `notification_reads` VALUES ('19', '13', '7', '2026-05-21 04:14:03');
+INSERT INTO `notification_reads` VALUES ('20', '14', '7', '2026-05-21 04:14:03');
+INSERT INTO `notification_reads` VALUES ('21', '15', '7', '2026-05-21 04:14:03');
+INSERT INTO `notification_reads` VALUES ('22', '16', '7', '2026-05-21 04:14:03');
+INSERT INTO `notification_reads` VALUES ('23', '1', '15', '2026-05-23 02:02:37');
+INSERT INTO `notification_reads` VALUES ('24', '9', '15', '2026-05-23 02:02:37');
+INSERT INTO `notification_reads` VALUES ('25', '11', '15', '2026-05-23 02:02:37');
+INSERT INTO `notification_reads` VALUES ('26', '14', '15', '2026-05-23 02:02:37');
+INSERT INTO `notification_reads` VALUES ('27', '15', '15', '2026-05-23 02:02:37');
+INSERT INTO `notification_reads` VALUES ('28', '17', '15', '2026-05-23 02:02:37');
+INSERT INTO `notification_reads` VALUES ('29', '19', '15', '2026-05-23 02:02:37');
+INSERT INTO `notification_reads` VALUES ('30', '20', '15', '2026-05-23 02:02:37');
+INSERT INTO `notification_reads` VALUES ('31', '17', '7', '2026-05-25 06:38:26');
+INSERT INTO `notification_reads` VALUES ('32', '23', '7', '2026-05-25 06:38:26');
+INSERT INTO `notification_reads` VALUES ('33', '1', '1', '2026-05-25 07:11:17');
+INSERT INTO `notification_reads` VALUES ('34', '2', '1', '2026-05-25 07:11:17');
+INSERT INTO `notification_reads` VALUES ('35', '4', '1', '2026-05-25 07:11:17');
+INSERT INTO `notification_reads` VALUES ('36', '5', '1', '2026-05-25 07:11:17');
+INSERT INTO `notification_reads` VALUES ('37', '9', '1', '2026-05-25 07:11:17');
+INSERT INTO `notification_reads` VALUES ('38', '11', '1', '2026-05-25 07:11:17');
+INSERT INTO `notification_reads` VALUES ('39', '14', '1', '2026-05-25 07:11:17');
+INSERT INTO `notification_reads` VALUES ('40', '15', '1', '2026-05-25 07:11:17');
+INSERT INTO `notification_reads` VALUES ('41', '17', '1', '2026-05-25 07:11:17');
+INSERT INTO `notification_reads` VALUES ('42', '24', '1', '2026-05-25 07:19:40');
+INSERT INTO `notification_reads` VALUES ('43', '25', '1', '2026-05-25 07:20:58');
+INSERT INTO `notification_reads` VALUES ('44', '26', '1', '2026-05-26 01:27:06');
+INSERT INTO `notification_reads` VALUES ('45', '27', '1', '2026-05-26 01:27:06');
+INSERT INTO `notification_reads` VALUES ('61', '28', '1', '2026-05-26 02:01:20');
+INSERT INTO `notification_reads` VALUES ('62', '29', '1', '2026-05-26 02:01:20');
+INSERT INTO `notification_reads` VALUES ('65', '30', '1', '2026-05-26 02:43:48');
+INSERT INTO `notification_reads` VALUES ('66', '31', '1', '2026-05-26 02:43:48');
+INSERT INTO `notification_reads` VALUES ('67', '32', '1', '2026-05-26 02:56:34');
+INSERT INTO `notification_reads` VALUES ('68', '33', '1', '2026-05-26 02:56:34');
+INSERT INTO `notification_reads` VALUES ('69', '34', '1', '2026-05-26 03:09:39');
+INSERT INTO `notification_reads` VALUES ('70', '35', '1', '2026-05-26 03:09:39');
+INSERT INTO `notification_reads` VALUES ('71', '36', '1', '2026-05-26 03:09:39');
+INSERT INTO `notification_reads` VALUES ('72', '37', '1', '2026-05-26 03:31:48');
+INSERT INTO `notification_reads` VALUES ('73', '38', '1', '2026-05-26 03:31:48');
+INSERT INTO `notification_reads` VALUES ('74', '39', '1', '2026-05-26 03:31:48');
+INSERT INTO `notification_reads` VALUES ('75', '40', '1', '2026-05-26 03:31:48');
+INSERT INTO `notification_reads` VALUES ('76', '41', '1', '2026-05-26 03:31:48');
+INSERT INTO `notification_reads` VALUES ('80', '42', '1', '2026-05-26 03:41:17');
+
+
+CREATE TABLE `notifications` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `partner_id` int(11) DEFAULT 0,
+  `title` varchar(255) NOT NULL,
+  `message` text NOT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `is_read` tinyint(4) DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+INSERT INTO `notifications` VALUES ('1', '0', '* hello', 'hello there *', '2026-05-21 02:35:38', '0');
+INSERT INTO `notifications` VALUES ('2', '1', '1', 'hello there', '2026-05-21 02:37:37', '0');
+INSERT INTO `notifications` VALUES ('3', '7', '7', 'hello there', '2026-05-21 02:38:24', '0');
+INSERT INTO `notifications` VALUES ('4', '1', '12236', 'hello there\r\n', '2026-05-21 02:49:38', '0');
+INSERT INTO `notifications` VALUES ('5', '1', '12236', 'hello there\r\n', '2026-05-21 02:59:45', '0');
+INSERT INTO `notifications` VALUES ('6', '7', 'from cous', 'hello there', '2026-05-21 03:05:22', '0');
+INSERT INTO `notifications` VALUES ('7', '7', '6 x 7', 'hello there', '2026-05-21 03:09:08', '0');
+INSERT INTO `notifications` VALUES ('8', '7', 'hello there', '67', '2026-05-21 03:38:55', '0');
+INSERT INTO `notifications` VALUES ('9', '0', '67', '67', '2026-05-21 03:40:04', '0');
+INSERT INTO `notifications` VALUES ('10', '7', 'light yagami', 'imgaya light', '2026-05-21 03:40:56', '0');
+INSERT INTO `notifications` VALUES ('11', '0', 'helo there', '67', '2026-05-21 03:48:18', '0');
+INSERT INTO `notifications` VALUES ('12', '7', 'tes tes', '67', '2026-05-21 03:51:30', '0');
+INSERT INTO `notifications` VALUES ('13', '7', 'yolo', ' tes tes ', '2026-05-21 04:01:02', '0');
+INSERT INTO `notifications` VALUES ('14', '0', 'yoyo', '67', '2026-05-21 04:02:38', '0');
+INSERT INTO `notifications` VALUES ('15', '0', 'hi', 'hello there', '2026-05-21 04:11:57', '0');
+INSERT INTO `notifications` VALUES ('16', '7', 'yoyo', 'yolo', '2026-05-21 04:13:25', '0');
+INSERT INTO `notifications` VALUES ('17', '0', 'xi', '1223', '2026-05-21 04:14:44', '0');
+INSERT INTO `notifications` VALUES ('19', '15', 'Hurry Up Sales', 'Close 10 orders and get 1 free phone', '2026-05-23 02:00:36', '0');
+INSERT INTO `notifications` VALUES ('20', '15', 'Test', '#ewr', '2026-05-23 02:01:32', '0');
+INSERT INTO `notifications` VALUES ('21', '15', 'Test', 'Hiio', '2026-05-23 02:04:18', '0');
+INSERT INTO `notifications` VALUES ('22', '15', 'Hii', '123', '2026-05-23 02:05:10', '0');
+INSERT INTO `notifications` VALUES ('23', '7', 'hello there', '67', '2026-05-25 06:24:38', '0');
+INSERT INTO `notifications` VALUES ('24', '1', 'yoyo', 'yoyo gusharish', '2026-05-25 07:12:34', '0');
+INSERT INTO `notifications` VALUES ('25', '1', 'allo', 'allo how ru', '2026-05-25 07:20:20', '0');
+INSERT INTO `notifications` VALUES ('26', '1', 'wazzaaaaaaa', 'wazzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzaaaaaaaaaaaaaaaaaaaaa', '2026-05-25 07:21:50', '0');
+INSERT INTO `notifications` VALUES ('27', '1', 'hi', 'hellow there', '2026-05-25 07:24:11', '0');
+INSERT INTO `notifications` VALUES ('28', '1', 'yooo', 'yoooo watch that ship watch that ship', '2026-05-26 01:47:58', '0');
+INSERT INTO `notifications` VALUES ('29', '1', 'hi', 'helo there', '2026-05-26 01:48:31', '0');
+INSERT INTO `notifications` VALUES ('30', '1', 'allo', 'allo allo', '2026-05-26 02:01:55', '0');
+INSERT INTO `notifications` VALUES ('31', '1', 'yo yo', 'yo yo \'s bizar adventures', '2026-05-26 02:06:35', '0');
+INSERT INTO `notifications` VALUES ('32', '1', 'alo ther', 'allo thar', '2026-05-26 02:45:34', '0');
+INSERT INTO `notifications` VALUES ('33', '1', 'hiya', 'hi hi', '2026-05-26 02:47:05', '0');
+INSERT INTO `notifications` VALUES ('34', '1', 'hello', 'hello fam', '2026-05-26 02:57:03', '0');
+INSERT INTO `notifications` VALUES ('35', '1', '67', '67!', '2026-05-26 02:57:34', '0');
+INSERT INTO `notifications` VALUES ('36', '1', '420', '67!', '2026-05-26 03:00:53', '0');
+INSERT INTO `notifications` VALUES ('37', '1', 'bakudo no 67', 'chakaho', '2026-05-26 03:10:10', '0');
+INSERT INTO `notifications` VALUES ('38', '1', 'bankai', 'zen bon sakura', '2026-05-26 03:11:04', '0');
+INSERT INTO `notifications` VALUES ('39', '1', 'sup1', 'whats up home', '2026-05-26 03:23:46', '0');
+INSERT INTO `notifications` VALUES ('40', '0', '67', '6 7', '2026-05-26 03:24:14', '0');
+INSERT INTO `notifications` VALUES ('41', '1', '420', '60', '2026-05-26 03:25:30', '0');
+INSERT INTO `notifications` VALUES ('42', '1', '420', '69', '2026-05-26 03:32:36', '0');
 
 
 CREATE TABLE `partner_levels` (
@@ -672,7 +800,7 @@ INSERT INTO `partners` VALUES ('11', 'Abrar', 'Munawfer', '94', '776817476', 'ab
 INSERT INTO `partners` VALUES ('12', 'test', 'test', '94', '771234567', 'test@mail.com', '0', '', '', '', 'freelancer', '', '', '', '', '', '', '', 'authorized');
 INSERT INTO `partners` VALUES ('13', 'test', 'test', '94', '789456321', 'tes3@mail.com', '0', '', '', '', 'freelancer', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pending');
 INSERT INTO `partners` VALUES ('14', 'aurx', 'rrd', '94', '722693618', 'halirramzi@gmail.com', '0', '', '', '', 'freelancer', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pending');
-INSERT INTO `partners` VALUES ('15', 'Azmeer', 'Ali', '94', '773617091', 'powersofty2k@yahoo.com', '0', '', '', '', 'freelancer', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pending');
+INSERT INTO `partners` VALUES ('15', 'Azmeer', 'Ali', '94', '773617091', 'powersofty2k@yahoo.com', '0', '', '', '', 'freelancer', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'authorized');
 
 
 CREATE TABLE `payout_request` (
@@ -798,7 +926,7 @@ CREATE TABLE `sms_sendcount` (
   `mahalla_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`ID`),
   KEY `ID` (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=1385 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1393 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 INSERT INTO `sms_sendcount` VALUES ('1364', '1', '2266670609', '1', 'PartnerOTP', 'Your xPower Partners OTP is: 2387', '94702610398', 'Etisalet', '2026-05-08', '09:45:09', '1', '1', 'lex', 'partners', '', '', '', '0');
 INSERT INTO `sms_sendcount` VALUES ('1365', '1', '2266933625', '1', 'PartnerOTP', 'Your xPower Partners OTP is: 6556', '94702610398', 'Etisalet', '2026-05-08', '10:15:44', '1', '1', 'lex', 'partners', '', '', '', '0');
@@ -821,6 +949,14 @@ INSERT INTO `sms_sendcount` VALUES ('1381', '1', '2280154753', '1', 'PartnerOTP'
 INSERT INTO `sms_sendcount` VALUES ('1382', '1', '2280208769', '1', 'PartnerOTP', 'Your xPower Partners OTP is: 2726', '94702610398', 'Etisalet', '2026-05-11', '05:38:11', '1', '1', 'lex', 'partners', '', '', '', '0');
 INSERT INTO `sms_sendcount` VALUES ('1383', '1', '2286191301', '1', 'PartnerOTP', 'Your xPower Partners OTP is: 3222', '94772610398', 'Etisalet', '2026-05-12', '09:10:19', '1', '1', 'chamuditha', 'partners', '', '', '', '0');
 INSERT INTO `sms_sendcount` VALUES ('1384', '1', '2286237003', '1', 'PartnerOTP', 'Your xPower Partners OTP is: 4252', '94702610398', 'Etisalet', '2026-05-12', '09:19:05', '1', '1', 'lex', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount` VALUES ('1385', '1', '2332885243', '1', 'PartnerOTP', 'Your xPower Partners OTP is: 5751', '94772610398', 'Etisalet', '2026-05-23', '03:29:38', '1', '1', 'chamuditha', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount` VALUES ('1386', '1', '2332885847', '1', 'PartnerOTP', 'Your xPower Partners OTP is: 4644', '94702610398', 'Etisalet', '2026-05-23', '03:29:50', '1', '1', 'lex', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount` VALUES ('1387', '1', '2332903997', '1', 'PartnerOTP', 'Your xPower Partners OTP is: 6185', '94772610398', 'Etisalet', '2026-05-23', '03:34:15', '1', '1', 'chamuditha', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount` VALUES ('1388', '1', '2332911891', '1', 'PartnerOTP', 'Your xPower Partners OTP is: 7200', '94702610398', 'Etisalet', '2026-05-23', '03:35:47', '1', '1', 'lex', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount` VALUES ('1389', '1', '2339753085', '1', 'PartnerOTP', 'Your xPower Partners OTP is: 5247', '94702610398', 'Etisalet', '2026-05-25', '10:19:55', '1', '1', 'lex', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount` VALUES ('1390', '1', '2339956625', '1', 'PartnerOTP', 'Your xPower Partners OTP is: 6079', '94772610398', 'Etisalet', '2026-05-25', '11:07:28', '1', '1', 'chamuditha', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount` VALUES ('1391', '1', '2339991111', '1', 'PartnerOTP', 'Your xPower Partners OTP is: 1597', '94702610398', 'Etisalet', '2026-05-25', '11:18:42', '1', '1', 'lex', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount` VALUES ('1392', '1', '2339991835', '1', 'PartnerOTP', 'Your xPower Partners OTP is: 9431', '94772610398', 'Etisalet', '2026-05-25', '11:18:52', '1', '1', 'chamuditha', 'partners', '', '', '', '0');
 
 
 CREATE TABLE `sms_sendcount_error` (
@@ -844,8 +980,16 @@ CREATE TABLE `sms_sendcount_error` (
   `mahalla_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`ID`),
   KEY `ID` (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=104 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=112 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
+INSERT INTO `sms_sendcount_error` VALUES ('104', '1', '', '', 'PartnerOTP', 'Your xPower Partners OTP is: 8807', '94772610398', 'Etisalet', '2026-05-20', '11:30:37', '1', '1', 'chamuditha', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount_error` VALUES ('105', '1', '', '', 'PartnerOTP', 'Your xPower Partners OTP is: 7505', '94702610398', 'Etisalet', '2026-05-21', '06:26:49', '1', '1', 'lex', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount_error` VALUES ('106', '1', '', '', 'PartnerOTP', 'Your xPower Partners OTP is: 6188', '94772610398', 'Etisalet', '2026-05-21', '06:39:31', '1', '1', 'chamuditha', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount_error` VALUES ('107', '1', '', '', 'PartnerOTP', 'Your xPower Partners OTP is: 3311', '94772610398', 'Etisalet', '2026-05-21', '06:40:24', '1', '1', 'chamuditha', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount_error` VALUES ('108', '1', '', '', 'PartnerOTP', 'Your xPower Partners OTP is: 3790', '94702610398', 'Etisalet', '2026-05-21', '07:06:05', '1', '1', 'lex', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount_error` VALUES ('109', '1', '', '', 'PartnerOTP', 'Your xPower Partners OTP is: 8005', '94702610398', 'Etisalet', '2026-05-21', '07:07:51', '1', '1', 'lex', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount_error` VALUES ('110', '1', '', '', 'PartnerOTP', 'Your xPower Partners OTP is: 4946', '94702610398', 'Etisalet', '2026-05-21', '07:58:03', '1', '1', 'lex', 'partners', '', '', '', '0');
+INSERT INTO `sms_sendcount_error` VALUES ('111', '1', '', '', 'PartnerOTP', 'Your xPower Partners OTP is: 4009', '94702610398', 'Etisalet', '2026-05-21', '08:01:33', '1', '1', 'lex', 'partners', '', '', '', '0');
 
 
 CREATE TABLE `users` (
@@ -865,8 +1009,9 @@ CREATE TABLE `users` (
   UNIQUE KEY `email` (`email`),
   KEY `idx_email` (`email`),
   KEY `idx_role` (`role`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
+INSERT INTO `users` VALUES ('1', 'admin@xpower.com', '$2y$10$tDlkof7LBUFJdQcf75RudOKcGcb3z1ZxDs3wnPhEWZaKh95jcUOfW', 'Admin', NULL, 'admin', NULL, '1', '1', NULL, '2026-05-19 01:43:03', '2026-05-19 01:43:03');
 
 
 CREATE TABLE `web_codes` (
@@ -876,7 +1021,7 @@ CREATE TABLE `web_codes` (
   `time` datetime NOT NULL,
   `status` int(11) NOT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=428 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=444 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `web_codes` VALUES ('340', '772610398', '2112', '2026-05-06 09:24:53', '1');
 INSERT INTO `web_codes` VALUES ('341', '702610398', '8460', '2026-05-06 09:26:16', '1');
@@ -966,6 +1111,22 @@ INSERT INTO `web_codes` VALUES ('424', '775656798', '4273', '2026-05-11 05:30:59
 INSERT INTO `web_codes` VALUES ('425', '702610398', '2726', '2026-05-11 05:38:09', '1');
 INSERT INTO `web_codes` VALUES ('426', '772610398', '3222', '2026-05-12 09:10:17', '1');
 INSERT INTO `web_codes` VALUES ('427', '702610398', '4252', '2026-05-12 09:19:03', '1');
+INSERT INTO `web_codes` VALUES ('428', '772610398', '8807', '2026-05-20 11:30:35', '1');
+INSERT INTO `web_codes` VALUES ('429', '702610398', '7505', '2026-05-21 06:26:47', '1');
+INSERT INTO `web_codes` VALUES ('430', '772610398', '6188', '2026-05-21 06:39:29', '1');
+INSERT INTO `web_codes` VALUES ('431', '772610398', '3311', '2026-05-21 06:40:22', '1');
+INSERT INTO `web_codes` VALUES ('432', '702610398', '3790', '2026-05-21 07:06:03', '1');
+INSERT INTO `web_codes` VALUES ('433', '702610398', '8005', '2026-05-21 07:07:49', '1');
+INSERT INTO `web_codes` VALUES ('434', '702610398', '4946', '2026-05-21 07:58:01', '1');
+INSERT INTO `web_codes` VALUES ('435', '702610398', '4009', '2026-05-21 08:01:31', '1');
+INSERT INTO `web_codes` VALUES ('436', '772610398', '5751', '2026-05-23 03:29:36', '1');
+INSERT INTO `web_codes` VALUES ('437', '702610398', '4644', '2026-05-23 03:29:48', '1');
+INSERT INTO `web_codes` VALUES ('438', '772610398', '6185', '2026-05-23 03:34:13', '1');
+INSERT INTO `web_codes` VALUES ('439', '702610398', '7200', '2026-05-23 03:35:45', '1');
+INSERT INTO `web_codes` VALUES ('440', '702610398', '5247', '2026-05-25 10:19:53', '1');
+INSERT INTO `web_codes` VALUES ('441', '772610398', '6079', '2026-05-25 11:07:26', '1');
+INSERT INTO `web_codes` VALUES ('442', '702610398', '1597', '2026-05-25 11:18:39', '0');
+INSERT INTO `web_codes` VALUES ('443', '772610398', '9431', '2026-05-25 11:18:50', '1');
 
 
 CREATE TABLE `web_documents` (

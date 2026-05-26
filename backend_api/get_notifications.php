@@ -28,12 +28,14 @@ try {
 
     $partner_id = $partner['ID'];
 
-    // 2. Fetch notifications for ALL (0) or THIS partner
-    $stmt = $conn->prepare("SELECT id, title, message, created_at, is_read 
-                           FROM notifications 
-                           WHERE partner_id = 0 OR partner_id = ? 
-                           ORDER BY created_at DESC");
-    $stmt->bind_param("i", $partner_id);
+    // 2. Fetch notifications with actual read status
+    $stmt = $conn->prepare("SELECT n.id, n.title, n.message, n.created_at, 
+                                   (CASE WHEN r.id IS NOT NULL THEN 1 ELSE 0 END) as is_read
+                           FROM notifications n
+                           LEFT JOIN notification_reads r ON n.id = r.notification_id AND r.partner_id = ?
+                           WHERE n.partner_id = 0 OR n.partner_id = ? 
+                           ORDER BY n.created_at DESC");
+    $stmt->bind_param("ii", $partner_id, $partner_id);
     $stmt->execute();
     $result = $stmt->get_result();
 
