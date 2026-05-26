@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "548887353629",
+    "project_id": "xpower-partners",
+    "storage_bucket": "xpower-partners.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:548887353629:android:608cbc388bbcb9648ea9f4",
+        "android_client_info": {
+          "package_name": "com.powersoft.xPowerPartners.xpower_partners"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCE4SR2t-wJY6VNJA1YsTEuoWeQ2P25HGE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

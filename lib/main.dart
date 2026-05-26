@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:flutter_background_service_android/flutter_background_service_android.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'login_page.dart';
 import 'dashboard_page.dart';
 import 'services/session_manager.dart';
@@ -12,64 +12,73 @@ import 'services/notification_service.dart';
 import 'services/api_service.dart';
 import 'database/database_helper.dart';
 
-Future<void> initializeService() async {
-  final service = FlutterBackgroundService();
-
-  await service.configure(
-    androidConfiguration: AndroidConfiguration(
-      onStart: onStart,
-      autoStart: true,
-      isForegroundMode: true,
-      notificationChannelId: 'xpower_notifications',
-      initialNotificationTitle: 'xPower Sync Service',
-      initialNotificationContent: 'Syncing notifications...',
-      foregroundServiceNotificationId: 888,
-    ),
-    iosConfiguration: IosConfiguration(autoStart: true, onForeground: (_) => true),
-  );
-  service.startService();
-}
-
 @pragma('vm:entry-point')
-void onStart(ServiceInstance service) async {
-  DartPluginRegistrant.ensureInitialized();
-  if (service is AndroidServiceInstance) {
-    service.on('setAsForeground').listen((event) {
-      service.setAsForegroundService();
-    });
-  }
-
-  Timer.periodic(const Duration(seconds: 60), (timer) async {
-    final phone = await SessionManager.getSession();
-    if (phone != null && phone.isNotEmpty) {
-      final api = ApiService();
-      final db = DatabaseHelper();
-      final notifications = await api.getNotifications(phone);
-      final lastId = await db.getLastNotificationId() ?? 0;
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    try {
+      WidgetsFlutterBinding.ensureInitialized();
+      final phone = await SessionManager.getSession();
       
-      final newOnes = notifications.where((n) => (int.tryParse(n['id'].toString()) ?? 0) > lastId).toList();
-      if (newOnes.isNotEmpty) {
-        for (var n in newOnes) {
-          await db.insertNotification(n);
-          await NotificationService().showNotification(
-            id: int.tryParse(n['id'].toString()) ?? 0,
-            title: n['title'].toString().toUpperCase(),
-            body: n['message'].toString(),
-          );
+      if (phone == null || phone.isEmpty) return true;
+
+      final api = ApiService();
+      final dbHelper = DatabaseHelper();
+      final notifications = await api.getNotifications(phone);
+
+      if (notifications.isNotEmpty) {
+        int? lastSeenId = await dbHelper.getLastNotificationId();
+        int baseId = lastSeenId ?? 0;
+        
+        final newNotifications = notifications.where((n) {
+          final id = int.tryParse(n['id'].toString()) ?? 0;
+          return id > baseId;
+        }).toList();
+
+        if (newNotifications.isNotEmpty) {
+          final ns = NotificationService();
+          await ns.init();
+          
+          for (var n in newNotifications) {
+            await dbHelper.insertNotification(n);
+            final id = int.tryParse(n['id'].toString()) ?? 0;
+            await ns.showNotification(
+              id: id,
+              title: n['title'].toString().toUpperCase(),
+              body: n['message'].toString(),
+            );
+          }
         }
       }
+    } catch (e) {
+      print('Background task EXCEPTION: $e');
     }
+    return true;
   });
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Init Notification Service
-  await NotificationService().init();
+  // Init Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
-  // Init Foreground Service
-  await initializeService();
+  await NotificationService().init();
+  await Workmanager().initialize(callbackDispatcher);
+  
+  // NOTE: WorkManager periodic tasks have a hard 15m limit from Android.
+  // To get faster, we must trigger from the server side (FCM).
+  await Workmanager().registerPeriodicTask(
+    "xpower_notification_fetch",
+    "fetch_notifications_task",
+    frequency: const Duration(minutes: 15),
+    existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
+    constraints: Constraints(
+      networkType: NetworkType.connected,
+      requiresBatteryNotLow: false, // Relaxed constraint
+    ),
+  );
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -99,7 +108,6 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _startForegroundPolling() {
-    // Check every 20 seconds while app is in foreground
     _foregroundTimer = Timer.periodic(const Duration(seconds: 20), (timer) async {
       final phone = await SessionManager.getSession();
       if (phone != null && phone.isNotEmpty) {

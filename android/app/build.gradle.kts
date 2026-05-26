@@ -1,7 +1,8 @@
 plugins {
     id("com.android.application")
-    // id("kotlin-android") is deprecated, use the newer syntax
-    kotlin("android")
+    // START: FlutterFire Configuration
+    id("com.google.gms.google-services")
+    // END: FlutterFire Configuration
     id("dev.flutter.flutter-gradle-plugin")
 }
 

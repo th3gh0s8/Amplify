@@ -4,6 +4,7 @@
 
 
 
+import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/partner.dart';
@@ -13,10 +14,20 @@ import '../models/payout_request.dart';
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
+  final _notificationStream = StreamController<List<Map<String, dynamic>>>.broadcast();
+  final _invoiceStream = StreamController<List<Invoice>>.broadcast();
+  final _payoutStream = StreamController<List<PayoutRequest>>.broadcast();
+  final _partnerStream = StreamController<Partner?>.broadcast();
+  final _customerStream = StreamController<List<Map<String, dynamic>>>.broadcast();
 
   factory DatabaseHelper() => _instance;
-
   DatabaseHelper._internal();
+
+  Stream<List<Map<String, dynamic>>> get notificationStream => _notificationStream.stream;
+  Stream<List<Invoice>> get invoiceStream => _invoiceStream.stream;
+  Stream<List<PayoutRequest>> get payoutStream => _payoutStream.stream;
+  Stream<Partner?> get partnerStream => _partnerStream.stream;
+  Stream<List<Map<String, dynamic>>> get customerStream => _customerStream.stream;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -144,7 +155,9 @@ class DatabaseHelper {
   // Partner Operations
   Future<int> insertPartner(Partner partner) async {
     Database db = await database;
-    return await db.insert('partners', partner.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+    final res = await db.insert('partners', partner.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+    _partnerStream.add(partner);
+    return res;
   }
 
   Future<Partner?> getPartner(int mobileNo) async {
@@ -155,9 +168,21 @@ class DatabaseHelper {
       whereArgs: [mobileNo],
     );
     if (maps.isNotEmpty) {
-      return Partner.fromJson(maps.first);
+      final p = Partner.fromJson(maps.first);
+      _partnerStream.add(p);
+      return p;
     }
+    _partnerStream.add(null);
     return null;
+  }
+
+  // Customer Operations
+  Future<void> syncCustomers(List<Map<String, dynamic>> customers) async {
+    Database db = await database;
+    for (var c in customers) {
+      await db.insert('new_clients', c, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+    _customerStream.add(customers);
   }
 
   // OTP / WebCode Operations
@@ -201,25 +226,32 @@ class DatabaseHelper {
       where: 'partner_tb = ?',
       whereArgs: [mobileNo],
     );
-    return List.generate(maps.length, (i) => Invoice.fromJson(maps[i]));
+    final invoices = List.generate(maps.length, (i) => Invoice.fromJson(maps[i]));
+    _invoiceStream.add(invoices);
+    return invoices;
   }
 
   // Payout Operations
   Future<int> requestPayout(PayoutRequest request) async {
     Database db = await database;
-    return await db.insert('payout_request', request.toJson());
+    final res = await db.insert('payout_request', request.toJson());
+    // In real app, fetch updated list here and add to stream
+    return res;
   }
 
   // Notification Operations
   Future<int> insertNotification(Map<String, dynamic> notification) async {
     Database db = await database;
-    return await db.insert('notifications', {
+    final res = await db.insert('notifications', {
       'id': int.tryParse(notification['id'].toString()) ?? 0,
       'title': notification['title'],
       'message': notification['message'],
       'created_at': notification['created_at'],
       'is_read': notification['is_read'] ?? 0,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
+    
+    _notificationStream.add(await getNotifications());
+    return res;
   }
 
   Future<List<Map<String, dynamic>>> getNotifications() async {
@@ -229,7 +261,9 @@ class DatabaseHelper {
 
   Future<int> markNotificationsRead() async {
     Database db = await database;
-    return await db.update('notifications', {'is_read': 1});
+    final res = await db.update('notifications', {'is_read': 1});
+    _notificationStream.add(await getNotifications());
+    return res;
   }
 
   Future<int?> getLastNotificationId() async {

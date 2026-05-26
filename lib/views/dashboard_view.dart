@@ -7,6 +7,7 @@ import 'level_benefits_page.dart';
 import 'invoice_details_page.dart';
 import 'my_customers_page.dart';
 import 'notifications_page.dart';
+import '../database/database_helper.dart';
 import '../utils/format_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -108,33 +109,37 @@ class _DashboardViewState extends State<DashboardView> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Center(child: CircularProgressIndicator(color: Colors.black));
-
-    return RefreshIndicator(
-      onRefresh: _loadData,
-      color: Colors.black,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildWelcomeSection(),
-            const SizedBox(height: 32),
-            _buildStatsGrid(),
-            const SizedBox(height: 32),
-            _buildLevelProgress(),
-
-            const SizedBox(height: 40),
-            const Text(
-              'RECENT ACTIVITY',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.black38),
-            ),
-            const SizedBox(height: 16),
-            _buildInvoicesList(),
-          ],
-        ),
-      ),
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: DatabaseHelper().notificationStream,
+      builder: (context, _) {
+        return RefreshIndicator(
+          onRefresh: _loadData,
+          color: Colors.black,
+          child: _isLoading && _dashboardData == null
+              ? const Center(child: CircularProgressIndicator(color: Colors.black))
+              : SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildWelcomeSection(),
+                      const SizedBox(height: 32),
+                      _buildStatsGrid(),
+                      const SizedBox(height: 32),
+                      _buildLevelProgress(),
+                      const SizedBox(height: 40),
+                      const Text(
+                        'RECENT ACTIVITY',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.black38),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildInvoicesList(),
+                    ],
+                  ),
+                ),
+        );
+      },
     );
   }
 

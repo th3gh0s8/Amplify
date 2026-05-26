@@ -40,8 +40,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['send_notification'])) 
     $stmt->bind_param("iss", $partner_id, $title, $message);
 
     if ($stmt->execute()) {
-        echo "<div class='alert alert-success'>Notification sent successfully!</div>";
+        require_once '../fcm_helper.php';
+        pushToPartner($conn, $partner_id, $title, $message);
+        echo "<div class='alert alert-success'>Notification sent successfully! (FCM triggered)</div>";
     } else {
+
         echo "<div class='alert alert-danger'>Failed to send notification: " . $conn->error . "</div>";
     }
 }

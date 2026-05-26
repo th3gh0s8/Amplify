@@ -324,8 +324,22 @@ class ApiService {
       } else {
         print('DEBUG: Server Error Response: ${response.statusCode}');
       }
+  Future<bool> updateFcmToken(String mobileNo, String token) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/update_fcm_token.php'),
+        body: json.encode({
+          'mobile_no': mobileNo,
+          'fcm_token': token,
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['success'] == true;
+      }
     } catch (e) {
-      print('API Error (Add Customer): $e');
+      print('API Error (Update FCM Token): $e');
     }
     return false;
   }
