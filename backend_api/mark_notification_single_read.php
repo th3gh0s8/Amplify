@@ -8,10 +8,12 @@ if (file_exists('db/db_config.php')) {
     require_once 'db_config.php';
 }
 
-$mobile_no = $_POST['mobile_no'] ?? '';
+$data = json_decode(file_get_contents("php://input"), true);
+$mobile_no = $data['mobile_no'] ?? '';
+$notification_id = (int)($data['notification_id'] ?? 0);
 
-if (empty($mobile_no)) {
-    die(json_encode(["success" => false, "message" => "Mobile number missing"]));
+if (empty($mobile_no) || $notification_id <= 0) {
+    die(json_encode(["success" => false, "message" => "Missing data"]));
 }
 
 try {
@@ -26,18 +28,14 @@ try {
         die(json_encode(["success" => false, "message" => "Partner record not found"]));
     }
 
-    // 2. Mark all relevant notifications as read for this partner in tracking table
-    $sql = "INSERT IGNORE INTO notification_reads (notification_id, partner_id)
-            SELECT id, ? FROM notifications 
-            WHERE partner_id = 0 OR partner_id = ?";
-    
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ii", $partner_id, $partner_id);
+    // 2. Mark specific notification as read in tracking table
+    $stmt = $conn->prepare("INSERT IGNORE INTO notification_reads (notification_id, partner_id) VALUES (?, ?)");
+    $stmt->bind_param("ii", $notification_id, $partner_id);
     $stmt->execute();
 
     // 3. Also update main notifications table column
-    $stmtU = $conn->prepare("UPDATE notifications SET is_read = 1 WHERE partner_id = 0 OR partner_id = ?");
-    $stmtU->bind_param("i", $partner_id);
+    $stmtU = $conn->prepare("UPDATE notifications SET is_read = 1 WHERE id = ?");
+    $stmtU->bind_param("i", $notification_id);
     
     if ($stmtU->execute()) {
         echo json_encode(["success" => true]);

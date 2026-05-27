@@ -73,11 +73,10 @@ class ApiService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/verify_otp.php'),
-        body: json.encode({
+        body: {
           'mobile_no': mobileNo,
-          'otp': otp,
-        }),
-        headers: {'Content-Type': 'application/json'},
+          'otp_code': otp,
+        },
       );
 
       if (response.statusCode == 200) {
@@ -92,7 +91,25 @@ class ApiService {
   }
 
   Future<Partner?> getPartner(String mobileNo) async {
-    return await getProfile(mobileNo);
+    try {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final response = await http.get(
+        Uri.parse('$baseUrl/get_partner.php?mobile_no=$mobileNo&t=$timestamp'),
+      );
+      
+      print('DEBUG: [getPartner] Fetching data from: ${Uri.parse('$baseUrl/get_partner.php?mobile_no=$mobileNo&t=$timestamp')}');
+
+      if (response.statusCode == 200) {
+        print('DEBUG: [getPartner] Raw Body: ${response.body}');
+        final data = json.decode(response.body);
+        if (data['success']) {
+          return Partner.fromJson(data['data']);
+        }
+      }
+    } catch (e) {
+      print('API Error (getPartner): $e');
+    }
+    return null;
   }
 
   Future<List<ResellPackage>> getPackages() async {
@@ -219,6 +236,26 @@ class ApiService {
       }
     } catch (e) {
       print('API Error (markNotificationsAsRead): $e');
+    }
+    return false;
+  }
+
+  Future<bool> markNotificationSingleRead(String mobileNo, int notificationId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/mark_notification_single_read.php'),
+        body: json.encode({
+          'mobile_no': mobileNo,
+          'notification_id': notificationId,
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['success'] == true;
+      }
+    } catch (e) {
+      print('API Error (markNotificationSingleRead): $e');
     }
     return false;
   }

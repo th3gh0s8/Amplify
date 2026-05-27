@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/customer.dart';
 import '../services/api_service.dart';
+import '../database/database_helper.dart';
 import '../widgets/system_overlay_wrapper.dart';
 import '../utils/format_utils.dart';
 
@@ -42,9 +43,9 @@ class _MyCustomersPageState extends State<MyCustomersPage> {
     }
   }
 
-  List<Customer> get _filteredCustomers {
-    if (_selectedFilter == 'ALL') return _customers;
-    return _customers.where((c) => c.status == _selectedFilter).toList();
+  List<Customer> _filteredCustomersList(List<Customer> customers) {
+    if (_selectedFilter == 'ALL') return customers;
+    return customers.where((c) => c.status == _selectedFilter).toList();
   }
 
   @override
@@ -53,7 +54,7 @@ class _MyCustomersPageState extends State<MyCustomersPage> {
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-          systemOverlayStyle: SystemUiOverlayStyle(
+          systemOverlayStyle: const SystemUiOverlayStyle(
             statusBarColor: Colors.transparent,
             statusBarIconBrightness: Brightness.dark,
             statusBarBrightness: Brightness.light,
@@ -68,14 +69,23 @@ class _MyCustomersPageState extends State<MyCustomersPage> {
           children: [
             _buildFilterBar(),
             Expanded(
-              child: RefreshIndicator(
-                onRefresh: _fetchCustomers,
-                color: Colors.black,
-                child: _isLoading 
-                  ? const Center(child: CircularProgressIndicator(color: Colors.black))
-                  : _filteredCustomers.isEmpty 
-                    ? _buildEmptyState()
-                    : _buildCustomerList(),
+              child: StreamBuilder<List<Map<String, dynamic>>>(
+                stream: DatabaseHelper().customerStream,
+                builder: (context, snapshot) {
+                  final list = snapshot.data != null 
+                    ? snapshot.data!.map((c) => Customer.fromJson(c)).toList()
+                    : _customers;
+
+                  return RefreshIndicator(
+                    onRefresh: _fetchCustomers,
+                    color: Colors.black,
+                    child: _isLoading && list.isEmpty 
+                      ? const Center(child: CircularProgressIndicator(color: Colors.black))
+                      : _filteredCustomersList(list).isEmpty 
+                        ? _buildEmptyState()
+                        : _buildCustomerList(_filteredCustomersList(list)),
+                  );
+                }
               ),
             ),
           ],
@@ -152,8 +162,7 @@ class _MyCustomersPageState extends State<MyCustomersPage> {
     );
   }
 
-  Widget _buildCustomerList() {
-    final list = _filteredCustomers;
+  Widget _buildCustomerList(List<Customer> list) {
     return ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),

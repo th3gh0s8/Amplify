@@ -31,7 +31,7 @@ class _DashboardViewState extends State<DashboardView> {
   void initState() {
     super.initState();
     _loadData();
-    _startPolling();
+    // Removed redundant polling as it's handled in main.dart
   }
 
   @override
@@ -40,23 +40,37 @@ class _DashboardViewState extends State<DashboardView> {
     super.dispose();
   }
 
-  void _startPolling() {
-    // Poll every 60 seconds for new notifications/data
-    _pollingTimer = Timer.periodic(const Duration(seconds: 60), (timer) {
-      _loadData(isSilent: true);
-    });
-  }
-
   Future<void> _loadData({bool isSilent = false}) async {
     final mobileNo = widget.phoneNumber;
     if (!isSilent && mounted) setState(() => _isLoading = true);
     
     try {
-      final data = await _apiService.getDashboardData(mobileNo);
-      final invoices = await _apiService.getInvoices(mobileNo);
-      final partner = await _apiService.getProfile(mobileNo);
-      
-      // Check for new notifications to show local alert if in app
+      // 1. Fetch main dashboard and invoices in parallel for speed
+      final results = await Future.wait([
+        _apiService.getDashboardData(mobileNo),
+        _apiService.getInvoices(mobileNo),
+      ]);
+
+      final data = results[0] as Map<String, dynamic>?;
+      final invoices = results[1] as List<dynamic>? ?? [];
+
+      if (mounted) {
+        setState(() {
+          _dashboardData = data;
+          _recentInvoices = invoices;
+          if (!isSilent) _isLoading = false;
+        });
+      }
+
+      // 2. Sync profile in background (trigger StreamBuilder)
+      _apiService.getProfile(mobileNo).then((partner) async {
+        if (partner != null) {
+          await DatabaseHelper().insertPartner(partner);
+          if (mounted) setState(() => _partner = partner);
+        }
+      });
+
+      // 3. Trigger foreground notification check
       if (data != null && data['unread_notifications'] != null) {
         int currentUnread = int.tryParse(data['unread_notifications'].toString()) ?? 0;
         int prevUnread = int.tryParse(_dashboardData?['unread_notifications']?.toString() ?? '0') ?? 0;
@@ -65,16 +79,9 @@ class _DashboardViewState extends State<DashboardView> {
           _checkAndShowForegroundNotification();
         }
       }
-
-      if (mounted) {
-        setState(() {
-          _dashboardData = data;
-          _recentInvoices = invoices;
-          _partner = partner;
-          _isLoading = false;
-        });
-      }
     } catch (e) {
+      print('Dashboard Load Error: $e');
+    } finally {
       if (mounted && !isSilent) setState(() => _isLoading = false);
     }
   }
@@ -109,42 +116,49 @@ class _DashboardViewState extends State<DashboardView> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: DatabaseHelper().notificationStream,
-      builder: (context, _) {
-        return RefreshIndicator(
-          onRefresh: _loadData,
-          color: Colors.black,
-          child: _isLoading && _dashboardData == null
-              ? const Center(child: CircularProgressIndicator(color: Colors.black))
-              : SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildWelcomeSection(),
-                      const SizedBox(height: 32),
-                      _buildStatsGrid(),
-                      const SizedBox(height: 32),
-                      _buildLevelProgress(),
-                      const SizedBox(height: 40),
-                      const Text(
-                        'RECENT ACTIVITY',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.black38),
+    return StreamBuilder<Partner?>(
+      stream: DatabaseHelper().partnerStream,
+      initialData: _partner,
+      builder: (context, partnerSnapshot) {
+        final partner = partnerSnapshot.data;
+        return StreamBuilder<List<Map<String, dynamic>>>(
+          stream: DatabaseHelper().notificationStream,
+          builder: (context, _) {
+            return RefreshIndicator(
+              onRefresh: _loadData,
+              color: Colors.black,
+              child: _isLoading && _dashboardData == null
+                  ? const Center(child: CircularProgressIndicator(color: Colors.black))
+                  : SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildWelcomeSection(partner),
+                          const SizedBox(height: 32),
+                          _buildStatsGrid(),
+                          const SizedBox(height: 32),
+                          _buildLevelProgress(),
+                          const SizedBox(height: 40),
+                          const Text(
+                            'RECENT ACTIVITY',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.black38),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildInvoicesList(),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      _buildInvoicesList(),
-                    ],
-                  ),
-                ),
+                    ),
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildWelcomeSection() {
-    bool hasPartner = _partner != null;
+  Widget _buildWelcomeSection(Partner? partner) {
+    bool hasPartner = partner != null;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -157,7 +171,7 @@ class _DashboardViewState extends State<DashboardView> {
             ),
             const SizedBox(height: 4),
             Text(
-              hasPartner ? '${_partner!.firstName} ${_partner!.lastName}'.toUpperCase() : (_partner?.mobileNo ?? widget.phoneNumber),
+              hasPartner ? '${partner.firstName} ${partner.lastName}'.toUpperCase() : (partner?.mobileNo ?? widget.phoneNumber),
               style: TextStyle(
                 fontSize: hasPartner ? 28 : 20, 
                 fontWeight: FontWeight.w900, 
@@ -167,40 +181,48 @@ class _DashboardViewState extends State<DashboardView> {
             ),
           ],
         ),
-        IconButton(
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => NotificationsPage(mobileNo: widget.phoneNumber)),
-          ).then((_) => _loadData()), // Refresh unread count when returning
-          icon: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black.withOpacity(0.05)),
-                ),
-                child: const Icon(Icons.notifications_none_rounded, size: 24, color: Colors.black),
+        StreamBuilder<List<Map<String, dynamic>>>(
+          stream: DatabaseHelper().notificationStream,
+          builder: (context, snapshot) {
+            final data = snapshot.data ?? [];
+            final unreadCount = data.where((n) => n['is_read'] == 0).length;
+
+            return IconButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationsPage(mobileNo: widget.phoneNumber)),
               ),
-              if ((int.tryParse(_dashboardData?['unread_notifications']?.toString() ?? '0') ?? 0) > 0)
-                Positioned(
-                  right: -2,
-                  top: -2,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                    child: Text(
-                      '${_dashboardData!['unread_notifications']}',
-                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.black.withOpacity(0.05)),
                     ),
+                    child: const Icon(Icons.notifications_none_rounded, size: 24, color: Colors.black),
                   ),
-                ),
-            ],
-          ),
+                  if (unreadCount > 0)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        child: Text(
+                          '$unreadCount',
+                          style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }
         ),
       ],
     );

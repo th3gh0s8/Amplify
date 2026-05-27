@@ -44,20 +44,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         for (var n in apiData) {
           await _dbHelper.insertNotification(n);
         }
-        
-        // Reload from DB to get updated list
-        final updated = await _dbHelper.getNotifications();
-        if (mounted) {
-          setState(() {
-            _notifications = updated;
-            _isLoading = false;
-          });
-          
-          // Mark as read on server
-          await _apiService.markNotificationsAsRead(widget.mobileNo);
-          // Mark as read locally
-          await _dbHelper.markNotificationsRead();
-        }
+        if (mounted) setState(() => _isLoading = false);
       } else {
         if (mounted) setState(() => _isLoading = false);
       }
@@ -133,9 +120,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
       opacity: isViewed ? 0.5 : 1.0,
       child: GestureDetector(
         onTap: isViewed ? null : () async {
-          await _apiService.markNotificationsAsRead(widget.mobileNo);
-          await _dbHelper.markNotificationsRead();
-          // UI updates automatically via StreamBuilder
+          await _dbHelper.markSingleNotificationRead(item['id']);
+          await _apiService.markNotificationSingleRead(widget.mobileNo, item['id']);
         },
         child: Container(
           decoration: BoxDecoration(

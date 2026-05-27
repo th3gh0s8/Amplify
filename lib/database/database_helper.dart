@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -39,7 +33,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'xpartner.db');
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -54,6 +48,32 @@ class DatabaseHelper {
           message TEXT NOT NULL,
           created_at TEXT NOT NULL,
           is_read INTEGER DEFAULT 0
+        )
+      ''');
+    }
+    if (oldVersion < 3) {
+      // Re-create partners table with correct columns
+      await db.execute('DROP TABLE IF EXISTS partners');
+      await db.execute('''
+        CREATE TABLE partners (
+          mobile_no TEXT PRIMARY KEY,
+          first_name TEXT NOT NULL,
+          last_name TEXT NOT NULL,
+          email TEXT NOT NULL,
+          c_code TEXT,
+          bank_account_no TEXT,
+          bank_name TEXT,
+          bank_ac_branch TEXT,
+          remarks TEXT,
+          partner_type TEXT,
+          nic_number TEXT,
+          business_name TEXT,
+          business_type TEXT,
+          address_line1 TEXT,
+          city TEXT,
+          tax_id TEXT,
+          website TEXT,
+          status TEXT
         )
       ''');
     }
@@ -90,13 +110,24 @@ class DatabaseHelper {
 
     await db.execute('''
       CREATE TABLE partners (
-        mobile_no INTEGER PRIMARY KEY,
+        mobile_no TEXT PRIMARY KEY,
         first_name TEXT NOT NULL,
         last_name TEXT NOT NULL,
         email TEXT NOT NULL,
-        bank_account_no INTEGER NOT NULL,
-        bank_name TEXT NOT NULL,
-        bank_account_type TEXT NOT NULL
+        c_code TEXT,
+        bank_account_no TEXT,
+        bank_name TEXT,
+        bank_ac_branch TEXT,
+        remarks TEXT,
+        partner_type TEXT,
+        nic_number TEXT,
+        business_name TEXT,
+        business_type TEXT,
+        address_line1 TEXT,
+        city TEXT,
+        tax_id TEXT,
+        website TEXT,
+        status TEXT
       )
     ''');
 
@@ -144,11 +175,11 @@ class DatabaseHelper {
     await db.insert('partners', {
       'first_name': 'Test',
       'last_name': 'Partner',
-      'mobile_no': 1234567890,
+      'mobile_no': '1234567890',
       'email': 'test@example.com',
-      'bank_account_no': 987654321,
+      'bank_account_no': '987654321',
       'bank_name': 'Test Bank',
-      'bank_account_type': 'Savings'
+      'bank_ac_branch': 'Colombo'
     });
   }
 
@@ -160,7 +191,7 @@ class DatabaseHelper {
     return res;
   }
 
-  Future<Partner?> getPartner(int mobileNo) async {
+  Future<Partner?> getPartner(String mobileNo) async {
     Database db = await database;
     List<Map<String, dynamic>> maps = await db.query(
       'partners',
@@ -174,15 +205,6 @@ class DatabaseHelper {
     }
     _partnerStream.add(null);
     return null;
-  }
-
-  // Customer Operations
-  Future<void> syncCustomers(List<Map<String, dynamic>> customers) async {
-    Database db = await database;
-    for (var c in customers) {
-      await db.insert('new_clients', c, conflictAlgorithm: ConflictAlgorithm.replace);
-    }
-    _customerStream.add(customers);
   }
 
   // OTP / WebCode Operations
@@ -235,19 +257,35 @@ class DatabaseHelper {
   Future<int> requestPayout(PayoutRequest request) async {
     Database db = await database;
     final res = await db.insert('payout_request', request.toJson());
-    // In real app, fetch updated list here and add to stream
     return res;
   }
 
   // Notification Operations
   Future<int> insertNotification(Map<String, dynamic> notification) async {
     Database db = await database;
+    final int id = int.tryParse(notification['id'].toString()) ?? 0;
+    
+    // Check if we already have this notification and it's marked as read locally
+    List<Map<String, dynamic>> existing = await db.query(
+      'notifications', 
+      where: 'id = ?', 
+      whereArgs: [id],
+      limit: 1
+    );
+
+    int isRead = int.tryParse(notification['is_read']?.toString() ?? '0') ?? 0;
+    
+    // If it exists and was read locally, preserve that status
+    if (existing.isNotEmpty && existing.first['is_read'] == 1) {
+      isRead = 1;
+    }
+
     final res = await db.insert('notifications', {
-      'id': int.tryParse(notification['id'].toString()) ?? 0,
+      'id': id,
       'title': notification['title'],
       'message': notification['message'],
       'created_at': notification['created_at'],
-      'is_read': notification['is_read'] ?? 0,
+      'is_read': isRead,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
     
     _notificationStream.add(await getNotifications());
@@ -266,6 +304,18 @@ class DatabaseHelper {
     return res;
   }
 
+  Future<int> markSingleNotificationRead(int id) async {
+    Database db = await database;
+    final res = await db.update(
+      'notifications', 
+      {'is_read': 1}, 
+      where: 'id = ?', 
+      whereArgs: [id]
+    );
+    _notificationStream.add(await getNotifications());
+    return res;
+  }
+
   Future<int?> getLastNotificationId() async {
     Database db = await database;
     List<Map<String, dynamic>> result = await db.query(
@@ -278,5 +328,14 @@ class DatabaseHelper {
       return result.first['id'] as int?;
     }
     return null;
+  }
+
+  // Customer Operations
+  Future<void> syncCustomers(List<Map<String, dynamic>> customers) async {
+    Database db = await database;
+    for (var c in customers) {
+      await db.insert('new_clients', c, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+    _customerStream.add(customers);
   }
 }
