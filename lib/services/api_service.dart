@@ -51,21 +51,33 @@ class ApiService {
   }
 
   Future<bool> registerPartner(Partner partner) async {
+    final res = await registerPartnerResponse(partner);
+    return res != null && res['success'] == true;
+  }
+
+  Future<Map<String, dynamic>?> registerPartnerResponse(Partner partner) async {
     try {
+      // http.post body Map must have String values and no nulls
+      final Map<String, String> body = {};
+      partner.toJson().forEach((key, value) {
+        if (value != null) {
+          body[key] = value.toString();
+        }
+      });
+
       final response = await http.post(
         Uri.parse('$baseUrl/register_partner.php'),
-        body: partner.toJson(), // http.post automatically form-encodes Maps
+        body: body,
       );
 
       if (response.statusCode == 200) {
         print('DEBUG: [registerPartner] Raw Body: ${response.body}');
-        final data = json.decode(response.body);
-        return data['success'] == true;
+        return json.decode(response.body);
       }
     } catch (e) {
       print('API Error (registerPartner): $e');
     }
-    return false;
+    return null;
   }
 
   Future<Map<String, dynamic>?> verifyOTP(String mobileNo, String otp) async {
