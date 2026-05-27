@@ -25,8 +25,8 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
     setState(() => _isLoading = true);
 
     try {
-      bool isValid = await _apiService.verifyOTP(widget.phoneNumber, otpStr);
-      if (isValid) {
+      final response = await _apiService.verifyOTP(widget.phoneNumber, otpStr);
+      if (response != null) {
         // Save session on successful verification
         await SessionManager.saveSession(widget.phoneNumber);
 

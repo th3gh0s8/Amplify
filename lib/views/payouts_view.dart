@@ -103,13 +103,14 @@ class _PayoutsViewState extends State<PayoutsView> {
     final result = await _apiService.requestPayout(mobileNo, requestedAmount);
       
     if (mounted) {
-      if (result['success']) {
+      if (result != null && result['success']) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PAYOUT REQUESTED SUCCESSFULLY')));
         _fetchPayoutData();
-      } else if (result['code'] == 'MISSING_BANK') {
+      } else if (result != null && result['code'] == 'MISSING_BANK') {
         _showBankMissingDialog();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
+        String msg = result?['message'] ?? 'FAILED TO REQUEST PAYOUT';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
       }
     }
     setState(() => _isRequesting = false);

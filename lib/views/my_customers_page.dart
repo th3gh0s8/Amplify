@@ -29,7 +29,8 @@ class _MyCustomersPageState extends State<MyCustomersPage> {
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      final customers = await _apiService.getCustomers(widget.phoneNumber);
+      final customersRaw = await _apiService.getCustomers(widget.phoneNumber);
+      final customers = customersRaw.map((c) => Customer.fromJson(c)).toList();
       if (mounted) {
         setState(() {
           _customers = customers;

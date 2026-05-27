@@ -7,18 +7,101 @@ import '../models/customer.dart';
 import '../models/resell_package.dart';
 
 class ApiService {
-  // Production URL
   static const String baseUrl = 'https://powersoftt.com/xPowerPartners';
+
+  Future<Partner?> getProfile(String mobileNo) async {
+    try {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final response = await http.get(
+        Uri.parse('$baseUrl/get_profile.php?mobile_no=$mobileNo&t=$timestamp'),
+      );
+      
+      print('DEBUG: [getProfile] Fetching data from: ${Uri.parse('$baseUrl/get_profile.php?mobile_no=$mobileNo&t=$timestamp')}');
+
+      if (response.statusCode == 200) {
+        print('DEBUG: [getProfile] Raw Body: ${response.body}');
+        final data = json.decode(response.body);
+        if (data['success']) {
+          return Partner.fromJson(data['data']);
+        }
+      }
+    } catch (e) {
+      print('API Error (getProfile): $e');
+    }
+    return null;
+  }
+
+  Future<bool> updateProfile(Partner partner) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/update_profile.php'),
+        body: json.encode(partner.toJson()),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        print('DEBUG: [updateProfile] Raw Body: ${response.body}');
+        final data = json.decode(response.body);
+        return data['success'];
+      }
+    } catch (e) {
+      print('API Error (updateProfile): $e');
+    }
+    return false;
+  }
+
+  Future<bool> registerPartner(Partner partner) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/register_partner.php'),
+        body: json.encode(partner.toJson()),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        print('DEBUG: [registerPartner] Raw Body: ${response.body}');
+        final data = json.decode(response.body);
+        return data['success'];
+      }
+    } catch (e) {
+      print('API Error (registerPartner): $e');
+    }
+    return false;
+  }
+
+  Future<Map<String, dynamic>?> verifyOTP(String mobileNo, String otp) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/verify_otp.php'),
+        body: json.encode({
+          'mobile_no': mobileNo,
+          'otp': otp,
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        print('DEBUG: [verifyOtp] Raw Body: ${response.body}');
+        final data = json.decode(response.body);
+        if (data['success'] == true) return data;
+      }
+    } catch (e) {
+      print('API Error (verifyOtp): $e');
+    }
+    return null;
+  }
+
+  Future<Partner?> getPartner(String mobileNo) async {
+    return await getProfile(mobileNo);
+  }
 
   Future<List<ResellPackage>> getPackages() async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/get_packages.php?t=${DateTime.now().millisecondsSinceEpoch}'),
-      );
+      final response = await http.get(Uri.parse('$baseUrl/get_packages.php'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data['success'] == true) {
-          return (data['data'] as List).map((i) => ResellPackage.fromJson(i)).toList();
+        if (data['success']) {
+          return (data['data'] as List).map((p) => ResellPackage.fromJson(p)).toList();
         }
       }
     } catch (e) {
@@ -27,79 +110,61 @@ class ApiService {
     return [];
   }
 
-  Future<Partner?> getPartner(String mobileNo) async {
-    String cleanNo = mobileNo.replaceAll(RegExp(r'\D'), '');
-    if (cleanNo.startsWith('94')) cleanNo = cleanNo.substring(2);
-    if (cleanNo.startsWith('0')) cleanNo = cleanNo.substring(1);
-
-    final url = '$baseUrl/get_partner.php?mobile_no=$cleanNo&t=${DateTime.now().millisecondsSinceEpoch}';
-    print('DEBUG: [getPartner] Requesting fresh OTP from: $url');
-    
+  Future<List<Map<String, dynamic>>> getPayouts(String mobileNo) async {
     try {
-      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
-      print('DEBUG: [getPartner] Raw Body: ${response.body}');
-
+      final response = await http.get(Uri.parse('$baseUrl/get_payouts.php?mobile_no=$mobileNo'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data['success'] == true) {
-          return Partner.fromJson(data['data']);
+        if (data['success']) {
+          return List<Map<String, dynamic>>.from(data['data']);
         }
       }
     } catch (e) {
-      print('DEBUG: [getPartner] CONNECTION FAILED: $e');
+      print('API Error (getPayouts): $e');
+    }
+    return [];
+  }
+
+  Future<Map<String, dynamic>?> requestPayout(String mobileNo, double amount) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/request_payout.php'),
+        body: json.encode({
+          'mobile_no': mobileNo,
+          'amount': amount,
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+    } catch (e) {
+      print('API Error (requestPayout): $e');
     }
     return null;
   }
 
-  Future<Partner?> getProfile(String mobileNo) async {
-    String cleanNo = mobileNo.replaceAll(RegExp(r'\D'), '');
-    if (cleanNo.startsWith('94')) cleanNo = cleanNo.substring(2);
-    if (cleanNo.startsWith('0')) cleanNo = cleanNo.substring(1);
-
-    final url = '$baseUrl/get_profile.php?mobile_no=$cleanNo&t=${DateTime.now().millisecondsSinceEpoch}';
-    print('DEBUG: [getProfile] Fetching data from: $url');
-
+  Future<Map<String, dynamic>?> getDashboardData(String mobileNo) async {
     try {
-      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
-      print('DEBUG: [getProfile] Raw Body: ${response.body}');
-
+      final response = await http.get(Uri.parse('$baseUrl/get_dashboard_data.php?mobile_no=$mobileNo'));
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true) {
-          return Partner.fromJson(data['data']);
-        }
+        print('DEBUG: [getDashboardData] Raw Body: ${response.body}');
+        return json.decode(response.body)['data'];
       }
     } catch (e) {
-      print('DEBUG: [getProfile] Error: $e');
+      print('API Error (getDashboardData): $e');
     }
     return null;
-  }
-
-  Future<bool> verifyOTP(String mobileNo, String otpCode) async {
-    try {
-      final body = {'mobile_no': mobileNo, 'otp_code': otpCode};
-      final response = await http.post(Uri.parse('$baseUrl/verify_otp.php'), body: body);
-      print('DEBUG: [verifyOTP] Response: ${response.body}');
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['success'] == true;
-      }
-    } catch (e) {
-      print('DEBUG: [verifyOTP] Error: $e');
-    }
-    return false;
   }
 
   Future<List<Invoice>> getInvoices(String mobileNo) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/get_invoices.php?mobile_no=$mobileNo&t=${DateTime.now().millisecondsSinceEpoch}'),
-      );
-
+      final response = await http.get(Uri.parse('$baseUrl/get_invoices.php?mobile_no=$mobileNo'));
       if (response.statusCode == 200) {
+        print('DEBUG: [getInvoices] Raw Body: ${response.body}');
         final data = json.decode(response.body);
-        if (data['success'] == true) {
-          return (data['data'] as List).map((item) => Invoice.fromJson(item)).toList();
+        if (data['success']) {
+          return (data['data'] as List).map((i) => Invoice.fromJson(i)).toList();
         }
       }
     } catch (e) {
@@ -108,157 +173,31 @@ class ApiService {
     return [];
   }
 
-  Future<bool> registerPartner(Partner partner) async {
+  Future<List<Map<String, dynamic>>> getCustomers(String mobileNo) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/register_partner.php'),
-        body: {
-          'first_name': partner.firstName,
-          'last_name': partner.lastName,
-          'c_code': partner.cCode.toString(),
-          'mobile_no': partner.mobileNo.toString(),
-          'email': partner.email,
-          'bank_account_no': partner.bankAccountNo.toString(),
-          'bank_name': partner.bankName,
-          'bank_account_type': partner.bankBranch,
-        },
-      );
-
+      final response = await http.get(Uri.parse('$baseUrl/get_customers.php?mobile_no=$mobileNo'));
       if (response.statusCode == 200) {
+        print('DEBUG: [getCustomers] Raw Body: ${response.body}');
         final data = json.decode(response.body);
-        return data['success'] == true;
-      }
-    } catch (e) {
-      print('API Error: $e');
-    }
-    return false;
-  }
-
-  Future<Map<String, dynamic>?> getDashboardData(String mobileNo) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/get_dashboard_data.php?mobile_no=$mobileNo&t=${DateTime.now().millisecondsSinceEpoch}'),
-      );
-      print('DEBUG: [getDashboardData] Raw Body: ${response.body}');
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true) return data['data'];
-      }
-    } catch (e) {
-      print('API Error (getDashboardData): $e');
-    }
-    return null;
-  }
-
-  Future<List<Map<String, dynamic>>> getPayouts(String mobileNo) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/get_payouts.php?mobile_no=$mobileNo&t=${DateTime.now().millisecondsSinceEpoch}'),
-      );
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true) return List<Map<String, dynamic>>.from(data['data']);
-      }
-    } catch (e) {
-      print('API Error: $e');
-    }
-    return [];
-  }
-
-  Future<bool> updateBankDetails(String mobileNo, String bankName, String accNo, String type) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/update_bank_details.php'),
-        body: {
-          'mobile_no': mobileNo,
-          'bank_account_no': accNo,
-          'bank_name': bankName,
-          'bank_account_type': type,
-        },
-      );
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['success'] == true;
-      }
-    } catch (e) {
-      print('API Error: $e');
-    }
-    return false;
-  }
-
-  Future<bool> updateProfile(Partner partner) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/update_profile.php'),
-        body: {
-          'mobile_no': partner.mobileNo.toString(),
-          'c_code': partner.cCode.toString(),
-          'first_name': partner.firstName,
-          'last_name': partner.lastName,
-          'email': partner.email,
-          'bank_account_no': partner.bankAccountNo.toString(),
-          'bank_name': partner.bankName,
-          'bank_account_type': partner.bankBranch,
-          'remarks': partner.remarks,
-          'partner_type': partner.partnerType ?? '',
-          'nic_number': partner.nicNumber ?? '',
-          'business_name': partner.businessName ?? '',
-          'business_type': partner.businessType ?? '',
-          'address_line1': partner.addressLine1 ?? '',
-          'city': partner.city ?? '',
-          'tax_id': partner.taxId ?? '',
-          'website': partner.website ?? '',
-        },
-      );
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['success'] == true;
-      }
-    } catch (e) {
-      print('API Error: $e');
-    }
-    return false;
-  }
-
-  Future<List<Customer>> getCustomers(String mobileNo) async {
-    try {
-      final response = await http.get(Uri.parse('$baseUrl/get_customers.php?mobile_no=$mobileNo&t=${DateTime.now().millisecondsSinceEpoch}'));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true) {
-          return (data['data'] as List).map((i) => Customer.fromJson(i)).toList();
+        if (data['success']) {
+          return List<Map<String, dynamic>>.from(data['data']);
         }
       }
     } catch (e) {
-      print('DEBUG: [getCustomers] Error: $e');
+      print('API Error (getCustomers): $e');
     }
     return [];
-  }
-
-  Future<Map<String, dynamic>> requestPayout(String mobileNo, double amount) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/request_payout.php'),
-        body: {
-          'mobile_no': mobileNo,
-          'amount': amount.toString(),
-        },
-      );
-      return json.decode(response.body);
-    } catch (e) {
-      print('DEBUG: Payout API Error: $e');
-      return {'success': false, 'message': 'Network Error'};
-    }
   }
 
   Future<List<Map<String, dynamic>>> getNotifications(String mobileNo) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/get_notifications.php?mobile_no=$mobileNo&t=${DateTime.now().millisecondsSinceEpoch}'),
-      );
+      final response = await http.get(Uri.parse('$baseUrl/get_notifications.php?mobile_no=$mobileNo'));
       if (response.statusCode == 200) {
+        print('DEBUG: [getNotifications] Raw Body: ${response.body}');
         final data = json.decode(response.body);
-        if (data['success'] == true) return List<Map<String, dynamic>>.from(data['data']);
+        if (data['success']) {
+          return List<Map<String, dynamic>>.from(data['data']);
+        }
       }
     } catch (e) {
       print('API Error (getNotifications): $e');
@@ -270,9 +209,11 @@ class ApiService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/mark_notifications_read.php'),
-        body: {'mobile_no': mobileNo},
+        body: json.encode({'mobile_no': mobileNo}),
+        headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200) {
+        print('DEBUG: [markNotificationsAsRead] Raw Body: ${response.body}');
         final data = json.decode(response.body);
         return data['success'] == true;
       }
@@ -324,6 +265,12 @@ class ApiService {
       } else {
         print('DEBUG: Server Error Response: ${response.statusCode}');
       }
+    } catch (e) {
+      print('API Error (Add Customer): $e');
+    }
+    return false;
+  }
+
   Future<bool> updateFcmToken(String mobileNo, String token) async {
     try {
       final response = await http.post(
