@@ -91,10 +91,6 @@ void main() async {
     systemNavigationBarIconBrightness: Brightness.dark,
   ));
 
-  // Small delay to ensure splash is visible for at least a moment on fast devices
-  await Future.delayed(const Duration(seconds: 1));
-  FlutterNativeSplash.remove();
-
   runApp(const MyApp());
 }
 
@@ -169,6 +165,10 @@ class _MyAppState extends State<MyApp> {
         home: FutureBuilder<String?>(
           future: SessionManager.getSession(),
           builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.waiting) {
+              FlutterNativeSplash.remove();
+            }
+
             WidgetsBinding.instance.addPostFrameCallback((_) async {
               final service = NotificationService();
               if (!(await service.checkNotificationPermission())) {
