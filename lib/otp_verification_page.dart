@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dashboard_page.dart';
 import 'services/api_service.dart';
 import 'services/session_manager.dart';
+import 'services/notification_service.dart';
 
 class OTPVerificationPage extends StatefulWidget {
   final String phoneNumber;
@@ -29,6 +30,9 @@ class _OTPVerificationPageState extends State<OTPVerificationPage> {
       if (response != null) {
         // Save session on successful verification
         await SessionManager.saveSession(widget.phoneNumber);
+        
+        // Sync FCM token immediately
+        await NotificationService().syncToken();
 
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(

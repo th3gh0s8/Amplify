@@ -44,9 +44,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
         remarks: '',
       );
 
-      final success = await _apiService.registerPartner(partner);
+      final response = await _apiService.registerPartnerResponse(partner);
 
-      if (success) {
+      if (response != null && response['success'] == true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('REGISTRATION SUCCESSFUL')),
@@ -62,8 +62,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
         }
       } else {
         if (mounted) {
+          String errorMsg = response?['message'] ?? 'REGISTRATION FAILED';
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('REGISTRATION FAILED')),
+            SnackBar(content: Text(errorMsg.toUpperCase())),
           );
         }
       }

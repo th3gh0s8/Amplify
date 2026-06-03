@@ -59,11 +59,16 @@ class NotificationService {
     });
 
     // Token
+    await syncToken();
+  }
+
+  Future<void> syncToken() async {
     String? token = await getFCMToken();
     if (token != null) {
       final phone = await SessionManager.getSession();
       if (phone != null && phone.isNotEmpty) {
         await ApiService().updateFcmToken(phone, token);
+        debugPrint('FCM Token synced for $phone');
       }
     }
   }

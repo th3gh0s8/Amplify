@@ -102,14 +102,18 @@ function sendFCM($target_token, $title, $message) {
 }
 
 function pushToPartner($conn, $partner_id, $title, $message) {
-    $sql = "SELECT fcm_token FROM partners WHERE fcm_token IS NOT NULL AND fcm_token != ''";
     if ($partner_id > 0) {
-        $sql .= " AND ID = " . (int)$partner_id;
+        $sql = "SELECT fcm_token FROM partner_devices WHERE partner_id = " . (int)$partner_id;
+    } else {
+        // Send to ALL devices if partner_id is 0
+        $sql = "SELECT fcm_token FROM partner_devices";
     }
     
     $res = $conn->query($sql);
-    while ($row = $res->fetch_assoc()) {
-        sendFCM($row['fcm_token'], $title, $message);
+    if ($res) {
+        while ($row = $res->fetch_assoc()) {
+            sendFCM($row['fcm_token'], $title, $message);
+        }
     }
 }
 ?>

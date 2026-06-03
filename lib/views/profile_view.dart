@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/partner.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 import '../services/session_manager.dart';
 import '../database/database_helper.dart';
 import '../login_page.dart';
@@ -139,7 +140,12 @@ class _ProfileViewState extends State<ProfileView> {
                 }),
                 const SizedBox(height: 12),
                 _buildActionButton('LOGOUT', Icons.power_settings_new, () async {
+                   final token = await NotificationService().getFCMToken();
+                   if (token != null) {
+                     await _apiService.deleteFcmToken(token);
+                   }
                    await SessionManager.clearSession();
+
                    if (mounted) {
                      Navigator.of(context).pushAndRemoveUntil(
                        MaterialPageRoute(builder: (context) => const LoginPage()),
