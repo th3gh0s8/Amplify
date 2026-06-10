@@ -157,49 +157,12 @@ class _DashboardViewState extends State<DashboardView>
 
       // 2.5 Sync notifications for badge (Memory-based)
       _apiService.getNotifications(mobileNo).then((notifications) {
-        DatabaseHelper().updateNotifications(notifications);
+        DatabaseHelper().updateNotifications(notifications, mobileNo);
       });
-
-      // 3. Trigger foreground notification check
-      if (data != null && data['unread_notifications'] != null) {
-        int currentUnread =
-            int.tryParse(data['unread_notifications'].toString()) ?? 0;
-        int prevUnread =
-            int.tryParse(
-              _dashboardData?['unread_notifications']?.toString() ?? '0',
-            ) ??
-            0;
-
-        if (currentUnread > prevUnread) {
-          _checkAndShowForegroundNotification();
-        }
-      }
     } catch (e) {
       print('Dashboard Load Error: $e');
     } finally {
       if (mounted && !isSilent) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _checkAndShowForegroundNotification() async {
-    final notifications = await _apiService.getNotifications(
-      widget.phoneNumber,
-    );
-    if (notifications.isNotEmpty) {
-      final latest = notifications.first;
-      final latestId = int.tryParse(latest['id'].toString()) ?? 0;
-
-      final prefs = await SharedPreferences.getInstance();
-      final lastNotified = prefs.getInt('last_notified_id') ?? 0;
-
-      if (latestId > lastNotified) {
-        await NotificationService().showNotification(
-          id: latestId,
-          title: latest['title'].toString().toUpperCase(),
-          body: latest['message'].toString(),
-        );
-        await prefs.setInt('last_notified_id', latestId);
-      }
     }
   }
 

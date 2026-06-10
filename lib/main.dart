@@ -12,6 +12,7 @@ import 'database/database_helper.dart';
 import 'splash_screen.dart';
 import 'models/invoice.dart';
 import 'models/partner.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 @pragma('vm:entry-point')
 void callbackDispatcher() {
@@ -27,26 +28,36 @@ void callbackDispatcher() {
       final notifications = await api.getNotifications(phone);
 
       if (notifications.isNotEmpty) {
-        int? lastSeenId = await dbHelper.getLastNotificationId();
-        int baseId = lastSeenId ?? 0;
+        int? lastSeenId = await dbHelper.getLastNotificationId(phone);
 
-        final newNotifications = notifications.where((n) {
-          final id = int.tryParse(n['id'].toString()) ?? 0;
-          return id > baseId;
-        }).toList();
-
-        if (newNotifications.isNotEmpty) {
-          final ns = NotificationService();
-          await ns.init();
-
-          for (var n in newNotifications) {
-            await dbHelper.insertNotification(n);
+        if (lastSeenId == null) {
+          // First login background catch: save the highest ID, do not alert
+          int maxId = 0;
+          for (var n in notifications) {
             final id = int.tryParse(n['id'].toString()) ?? 0;
-            await ns.showNotification(
-              id: id,
-              title: n['title'].toString().toUpperCase(),
-              body: n['message'].toString(),
-            );
+            if (id > maxId) maxId = id;
+          }
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setInt('last_seen_notification_id_$phone', maxId);
+        } else {
+          final newNotifications = notifications.where((n) {
+            final id = int.tryParse(n['id'].toString()) ?? 0;
+            return id > lastSeenId;
+          }).toList();
+
+          if (newNotifications.isNotEmpty) {
+            final ns = NotificationService();
+            await ns.init();
+
+            for (var n in newNotifications) {
+              await dbHelper.insertNotification(n, phone);
+              final id = int.tryParse(n['id'].toString()) ?? 0;
+              await ns.showNotification(
+                id: id,
+                title: n['title'].toString().toUpperCase(),
+                body: n['message'].toString(),
+              );
+            }
           }
         }
       }
@@ -146,29 +157,34 @@ class _MyAppState extends State<MyApp> {
           print('Foreground Sync Error: $e');
         }
 
-        // 3. Process notifications separately (Memory-based)
+        // 3. Process notifications separately (Memory-based with Seeding)
         try {
           final notifications = await api.getNotifications(phone);
           if (notifications.isNotEmpty) {
-            final lastSeenId = await dbHelper.getLastNotificationId();
-            final newOnes = notifications.where((n) {
-              final id = int.tryParse(n['id'].toString()) ?? 0;
-              return id > lastSeenId;
-            }).toList();
+            final lastSeenId = await dbHelper.getLastNotificationId(phone);
 
-            // Push the fresh API list directly to the memory stream
-            dbHelper.updateNotifications(notifications);
+            if (lastSeenId == null) {
+              // First login foreground catch: seed notifications silently
+              dbHelper.updateNotifications(notifications, phone);
+            } else {
+              final newOnes = notifications.where((n) {
+                final id = int.tryParse(n['id'].toString()) ?? 0;
+                return id > lastSeenId;
+              }).toList();
 
-            for (var n in newOnes) {
-              final id = int.tryParse(n['id'].toString()) ?? 0;
-              await NotificationService().showNotification(
-                id: id,
-                title: n['title'].toString().toUpperCase(),
-                body: n['message'].toString(),
-              );
+              dbHelper.updateNotifications(notifications, phone);
+
+              for (var n in newOnes) {
+                final id = int.tryParse(n['id'].toString()) ?? 0;
+                await NotificationService().showNotification(
+                  id: id,
+                  title: n['title'].toString().toUpperCase(),
+                  body: n['message'].toString(),
+                );
+              }
             }
           } else {
-            dbHelper.updateNotifications([]);
+            dbHelper.updateNotifications([], phone);
           }
         } catch (e) {
           print('Error syncing notifications in foreground: $e');

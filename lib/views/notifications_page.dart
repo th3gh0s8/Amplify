@@ -61,7 +61,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     // 2. Sync from API
     try {
       final apiData = await _apiService.getNotifications(widget.mobileNo);
-      _dbHelper.updateNotifications(apiData);
+      _dbHelper.updateNotifications(apiData, widget.mobileNo);
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -139,7 +139,40 @@ class _NotificationsPageState extends State<NotificationsPage> {
       padding: const EdgeInsets.all(20),
       itemCount: items.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (_, index) => _buildNotificationCard(items[index], isViewed),
+      itemBuilder: (_, index) {
+        final item = items[index];
+        final card = _buildNotificationCard(item, isViewed);
+
+        if (isViewed) {
+          return card; // Swipe-to-read is only for unread (NEW) notifications
+        }
+
+        // Wrap with Dismissible for swipe gestures
+        return Dismissible(
+          key: ValueKey(item['id'].toString()),
+          direction: DismissDirection.endToStart, // Swipe right-to-left
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            decoration: BoxDecoration(
+              color: Colors.green.shade600,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.check, color: Colors.white),
+          ),
+          onDismissed: (direction) async {
+            final idInt = int.tryParse(item['id'].toString()) ?? 0;
+            // Mark read locally instantly in memory
+            _dbHelper.markNotificationReadInMemory(idInt);
+            // Sync status with server backend
+            await _apiService.markNotificationSingleRead(
+              widget.mobileNo,
+              idInt,
+            );
+          },
+          child: card,
+        );
+      },
     );
   }
 
@@ -150,18 +183,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     return Opacity(
       opacity: isViewed ? 0.5 : 1.0,
       child: GestureDetector(
-        onTap: isViewed
-            ? null
-            : () async {
-                final idInt = int.tryParse(item['id'].toString()) ?? 0;
-                // Instantly update the local state in memory
-                _dbHelper.markNotificationReadInMemory(idInt);
-                // Report the read to the server in the background
-                await _apiService.markNotificationSingleRead(
-                  widget.mobileNo,
-                  idInt,
-                );
-              },
+        onTap: null,
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,

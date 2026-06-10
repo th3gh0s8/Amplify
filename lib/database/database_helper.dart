@@ -319,8 +319,11 @@ class DatabaseHelper {
     return res;
   }
 
-  // Notification Operations (Memory-based with Shared Preferences persistence)
-  void updateNotifications(List<Map<String, dynamic>> notifications) {
+  // Notification Operations (Memory-based with User-Specific Shared Preferences persistence)
+  void updateNotifications(
+    List<Map<String, dynamic>> notifications,
+    String phone,
+  ) {
     _lastNotifications = notifications;
     _notificationStream.add(notifications);
 
@@ -333,22 +336,23 @@ class DatabaseHelper {
       }
       SharedPreferences.getInstance()
           .then((prefs) {
-            final lastId = prefs.getInt('last_seen_notification_id') ?? 0;
+            final lastId =
+                prefs.getInt('last_seen_notification_id_$phone') ?? 0;
             if (maxId > lastId) {
-              prefs.setInt('last_seen_notification_id', maxId);
+              prefs.setInt('last_seen_notification_id_$phone', maxId);
             }
           })
           .catchError((e) => print('Error storing last notification ID: $e'));
     }
   }
 
-  Future<int> getLastNotificationId() async {
+  Future<int?> getLastNotificationId(String phone) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getInt('last_seen_notification_id') ?? 0;
+      return prefs.getInt('last_seen_notification_id_$phone');
     } catch (e) {
       print('Error getting last notification id: $e');
-      return 0;
+      return null;
     }
   }
 
@@ -365,7 +369,10 @@ class DatabaseHelper {
     _notificationStream.add(_lastNotifications);
   }
 
-  Future<int> insertNotification(Map<String, dynamic> notification) async {
+  Future<int> insertNotification(
+    Map<String, dynamic> notification,
+    String phone,
+  ) async {
     final int id = int.tryParse(notification['id'].toString()) ?? 0;
 
     // Update memory list
@@ -391,9 +398,9 @@ class DatabaseHelper {
     // Save persistence
     try {
       final prefs = await SharedPreferences.getInstance();
-      final lastId = prefs.getInt('last_seen_notification_id') ?? 0;
+      final lastId = prefs.getInt('last_seen_notification_id_$phone') ?? 0;
       if (id > lastId) {
-        await prefs.setInt('last_seen_notification_id', id);
+        await prefs.setInt('last_seen_notification_id_$phone', id);
       }
     } catch (e) {
       print('Error saving last notification id: $e');
