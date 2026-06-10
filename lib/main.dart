@@ -146,29 +146,32 @@ class _MyAppState extends State<MyApp> {
           print('Foreground Sync Error: $e');
         }
 
-        // 3. Process notifications separately
-        final notifications = await api.getNotifications(phone);
-        if (notifications.isNotEmpty) {
-          final lastSeenId = await dbHelper.getLastNotificationId() ?? 0;
-          final newOnes = notifications.where((n) {
-            final id = int.tryParse(n['id'].toString()) ?? 0;
-            return id > lastSeenId;
-          }).toList();
+        // 3. Process notifications separately (Memory-based)
+        try {
+          final notifications = await api.getNotifications(phone);
+          if (notifications.isNotEmpty) {
+            final lastSeenId = await dbHelper.getLastNotificationId();
+            final newOnes = notifications.where((n) {
+              final id = int.tryParse(n['id'].toString()) ?? 0;
+              return id > lastSeenId;
+            }).toList();
 
-          for (var n in notifications) {
-            await dbHelper.insertNotification(n);
-          }
+            // Push the fresh API list directly to the memory stream
+            dbHelper.updateNotifications(notifications);
 
-          for (var n in newOnes) {
-            final id = int.tryParse(n['id'].toString()) ?? 0;
-            await NotificationService().showNotification(
-              id: id,
-              title: n['title'].toString().toUpperCase(),
-              body: n['message'].toString(),
-            );
+            for (var n in newOnes) {
+              final id = int.tryParse(n['id'].toString()) ?? 0;
+              await NotificationService().showNotification(
+                id: id,
+                title: n['title'].toString().toUpperCase(),
+                body: n['message'].toString(),
+              );
+            }
+          } else {
+            dbHelper.updateNotifications([]);
           }
-        } else {
-          await dbHelper.refreshNotificationStream();
+        } catch (e) {
+          print('Error syncing notifications in foreground: $e');
         }
       }
     });

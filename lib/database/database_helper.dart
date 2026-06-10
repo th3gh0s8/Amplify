@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import '../models/partner.dart';
 import '../models/invoice.dart';
 import '../models/payout_request.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -318,76 +319,107 @@ class DatabaseHelper {
     return res;
   }
 
-  // Notification Operations
-  Future<int> insertNotification(Map<String, dynamic> notification) async {
-    Database db = await database;
-    final int id = int.tryParse(notification['id'].toString()) ?? 0;
+  // Notification Operations (Memory-based with Shared Preferences persistence)
+  void updateNotifications(List<Map<String, dynamic>> notifications) {
+    _lastNotifications = notifications;
+    _notificationStream.add(notifications);
 
-    // Check if we already have this notification and it's marked as read locally
-    List<Map<String, dynamic>> existing = await db.query(
-      'notifications',
-      where: 'id = ?',
-      whereArgs: [id],
-      limit: 1,
-    );
-
-    int isRead = int.tryParse(notification['is_read']?.toString() ?? '0') ?? 0;
-
-    // If it exists and was read locally, preserve that status
-    if (existing.isNotEmpty && existing.first['is_read'] == 1) {
-      isRead = 1;
+    // Save the highest ID to prevent background notification spam
+    if (notifications.isNotEmpty) {
+      int maxId = 0;
+      for (var n in notifications) {
+        final id = int.tryParse(n['id'].toString()) ?? 0;
+        if (id > maxId) maxId = id;
+      }
+      SharedPreferences.getInstance()
+          .then((prefs) {
+            final lastId = prefs.getInt('last_seen_notification_id') ?? 0;
+            if (maxId > lastId) {
+              prefs.setInt('last_seen_notification_id', maxId);
+            }
+          })
+          .catchError((e) => print('Error storing last notification ID: $e'));
     }
-
-    final res = await db.insert('notifications', {
-      'id': id,
-      'title': notification['title'],
-      'message': notification['message'],
-      'created_at': notification['created_at'],
-      'is_read': isRead,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
-
-    _notificationStream.add(await getNotifications());
-    return res;
   }
 
+  Future<int> getLastNotificationId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getInt('last_seen_notification_id') ?? 0;
+    } catch (e) {
+      print('Error getting last notification id: $e');
+      return 0;
+    }
+  }
+
+  void markNotificationReadInMemory(int id) {
+    _lastNotifications = _lastNotifications.map((n) {
+      final nid = int.tryParse(n['id'].toString()) ?? 0;
+      if (nid == id) {
+        final updated = Map<String, dynamic>.from(n);
+        updated['is_read'] = 1;
+        return updated;
+      }
+      return n;
+    }).toList();
+    _notificationStream.add(_lastNotifications);
+  }
+
+  Future<int> insertNotification(Map<String, dynamic> notification) async {
+    final int id = int.tryParse(notification['id'].toString()) ?? 0;
+
+    // Update memory list
+    bool exists = false;
+    for (int i = 0; i < _lastNotifications.length; i++) {
+      final nid = int.tryParse(_lastNotifications[i]['id'].toString()) ?? 0;
+      if (nid == id) {
+        exists = true;
+        _lastNotifications[i] = notification;
+        break;
+      }
+    }
+    if (!exists) {
+      _lastNotifications.add(notification);
+      _lastNotifications.sort((a, b) {
+        final idA = int.tryParse(a['id'].toString()) ?? 0;
+        final idB = int.tryParse(b['id'].toString()) ?? 0;
+        return idB.compareTo(idA);
+      });
+    }
+    _notificationStream.add(_lastNotifications);
+
+    // Save persistence
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastId = prefs.getInt('last_seen_notification_id') ?? 0;
+      if (id > lastId) {
+        await prefs.setInt('last_seen_notification_id', id);
+      }
+    } catch (e) {
+      print('Error saving last notification id: $e');
+    }
+
+    return 1;
+  }
+
+  // Keep these async signatures to prevent code compilation errors elsewhere
   Future<List<Map<String, dynamic>>> getNotifications() async {
-    Database db = await database;
-    final list = await db.query('notifications', orderBy: 'id DESC');
-    _lastNotifications = list;
-    return list;
+    return _lastNotifications;
   }
 
   Future<int> markNotificationsRead() async {
-    Database db = await database;
-    final res = await db.update('notifications', {'is_read': 1});
-    _notificationStream.add(await getNotifications());
-    return res;
+    _lastNotifications = _lastNotifications.map((n) {
+      final updated = Map<String, dynamic>.from(n);
+      updated['is_read'] = 1;
+      return updated;
+    }).toList();
+    _notificationStream.add(_lastNotifications);
+    return 1;
   }
 
   Future<int> markSingleNotificationRead(int id) async {
-    Database db = await database;
-    final res = await db.update(
-      'notifications',
-      {'is_read': 1},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-    _notificationStream.add(await getNotifications());
-    return res;
-  }
-
-  Future<int?> getLastNotificationId() async {
-    Database db = await database;
-    List<Map<String, dynamic>> result = await db.query(
-      'notifications',
-      columns: ['id'],
-      orderBy: 'id DESC',
-      limit: 1,
-    );
-    if (result.isNotEmpty) {
-      return result.first['id'] as int?;
-    }
-    return null;
+    markNotificationReadInMemory(id);
+    return 1;
   }
 
   // Customer Operations

@@ -4,6 +4,7 @@ import '../services/api_service.dart';
 import '../database/database_helper.dart';
 import '../widgets/system_overlay_wrapper.dart';
 import 'package:intl/intl.dart';
+import 'dart:async';
 
 class NotificationsPage extends StatefulWidget {
   final String mobileNo;
@@ -18,11 +19,21 @@ class _NotificationsPageState extends State<NotificationsPage> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
   bool _isLoading = true;
   List<Map<String, dynamic>> _notifications = [];
+  StreamSubscription? _notificationSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadNotifications();
+
+    // Listen to real-time memory stream updates:
+    _notificationSubscription = _dbHelper.notificationStream.listen((
+      notifications,
+    ) {
+      if (mounted) {
+        _notifications = notifications;
+      }
+    });
   }
 
   @override
@@ -31,35 +42,28 @@ class _NotificationsPageState extends State<NotificationsPage> {
     _loadNotifications();
   }
 
+  @override
+  void dispose() {
+    _notificationSubscription?.cancel();
+    super.dispose();
+  }
+
   Future<void> _loadNotifications() async {
     setState(() => _isLoading = true);
 
     // 1. Load from cache first
     final cached = await _dbHelper.getNotifications();
-    if (mounted) {
-      setState(() {
-        _notifications = cached;
-        if (cached.isNotEmpty)
-          _isLoading = false; // Show cached data immediately
-      });
-    }
+    setState(() {
+      _notifications = cached;
+      if (cached.isNotEmpty) _isLoading = false; // Show cached data immediately
+    });
 
     // 2. Sync from API
     try {
       final apiData = await _apiService.getNotifications(widget.mobileNo);
-      if (apiData.isNotEmpty) {
-        for (var n in apiData) {
-          await _dbHelper.insertNotification(n);
-        }
-      }
-
-      // 3. Fetch the fully updated list (cache + API synced) and update state:
-      final freshList = await _dbHelper.getNotifications();
+      _dbHelper.updateNotifications(apiData);
       if (mounted) {
-        setState(() {
-          _notifications = freshList;
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     } catch (e) {
       print('Sync Error: $e');
@@ -149,10 +153,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
         onTap: isViewed
             ? null
             : () async {
-                await _dbHelper.markSingleNotificationRead(item['id']);
+                final idInt = int.tryParse(item['id'].toString()) ?? 0;
+                // Instantly update the local state in memory
+                _dbHelper.markNotificationReadInMemory(idInt);
+                // Report the read to the server in the background
                 await _apiService.markNotificationSingleRead(
                   widget.mobileNo,
-                  item['id'],
+                  idInt,
                 );
               },
         child: Container(

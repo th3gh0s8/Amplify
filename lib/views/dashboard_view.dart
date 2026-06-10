@@ -155,12 +155,9 @@ class _DashboardViewState extends State<DashboardView>
         }
       });
 
-      // 2.5 Sync notifications for badge
-      _apiService.getNotifications(mobileNo).then((notifications) async {
-        for (var n in notifications) {
-          await DatabaseHelper().insertNotification(n);
-        }
-        await DatabaseHelper().refreshNotificationStream();
+      // 2.5 Sync notifications for badge (Memory-based)
+      _apiService.getNotifications(mobileNo).then((notifications) {
+        DatabaseHelper().updateNotifications(notifications);
       });
 
       // 3. Trigger foreground notification check
