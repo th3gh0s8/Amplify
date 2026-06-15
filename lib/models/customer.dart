@@ -17,7 +17,7 @@ class Customer {
   final String? additionalPackages;
   final double? discount;
   final double? totalCost;
-
+  final String? paymentSlip;
   Customer({
     this.id,
     required this.partnerId,
@@ -37,6 +37,7 @@ class Customer {
     this.additionalPackages,
     this.discount,
     this.totalCost,
+    this.paymentSlip,
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) {
@@ -55,13 +56,18 @@ class Customer {
       companyField: safeString(json['com_field']),
       remarks: safeString(json['remarks']),
       additionalFeatures: safeString(json['additional_features']),
-      status: (json['display_status'] ?? json['status'] ?? 'PENDING').toString().toUpperCase(),
+      status: (json['display_status'] ?? json['status'] ?? 'PENDING')
+          .toString()
+          .toUpperCase(),
       reference: safeString(json['reference']),
-      preferredLang: safeString(json['preferred_lang']).isEmpty ? 'English' : safeString(json['preferred_lang']),
+      preferredLang: safeString(json['preferred_lang']).isEmpty
+          ? 'English'
+          : safeString(json['preferred_lang']),
       packageName: safeString(json['package_name']),
       additionalPackages: safeString(json['additional_packages']),
       discount: double.tryParse(json['discount']?.toString() ?? '0'),
       totalCost: double.tryParse(json['total_cost']?.toString() ?? '0'),
+      paymentSlip: json['payment_slip']?.toString(),
     );
   }
 
@@ -83,6 +89,7 @@ class Customer {
       'additional_packages': additionalPackages,
       'discount': discount,
       'total_cost': totalCost,
+      'payment_slip': paymentSlip,
     };
   }
 }
