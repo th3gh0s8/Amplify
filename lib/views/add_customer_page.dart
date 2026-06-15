@@ -644,6 +644,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                       _comNameController,
                       'COMPANY NAME',
                       Icons.business,
+                      textCapitalization: TextCapitalization.words,
                     ),
                     const SizedBox(height: 16),
                     _buildPhoneField(_comNumberController, 'COMPANY NUMBER'),
@@ -652,6 +653,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                       _comAreaController,
                       'COMPANY AREA',
                       Icons.map,
+                      textCapitalization: TextCapitalization.words,
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
@@ -664,6 +666,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                       _comFieldController,
                       'BUSINESS FIELD',
                       Icons.category,
+                      textCapitalization: TextCapitalization.words,
                     ),
 
                     const SizedBox(height: 32),
@@ -673,6 +676,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                       _adminNameController,
                       'OWNER NAME',
                       Icons.person,
+                      textCapitalization: TextCapitalization.words,
                     ),
                     const SizedBox(height: 16),
                     _buildPhoneField(_adminNumberController, 'OWNER NUMBER'),
@@ -751,10 +755,12 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
     bool isNumber = false,
     int maxLines = 1,
     bool isOptional = false,
+    TextCapitalization textCapitalization = TextCapitalization.sentences,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
+      textCapitalization: textCapitalization,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
       decoration: InputDecoration(
