@@ -302,7 +302,7 @@ class ApiService {
 
   Future<bool> addCustomer(
     Customer customer,
-    File paymentSlip, {
+    File? paymentSlip, {
     required String partnerMobile,
   }) async {
     try {
@@ -329,10 +329,11 @@ class ApiService {
         'discount': customer.discount?.toString() ?? '0',
         'total_cost': customer.totalCost?.toString() ?? '0',
       });
-
-      request.files.add(
-        await http.MultipartFile.fromPath('payment_slip', paymentSlip.path),
-      );
+      if (paymentSlip != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath('payment_slip', paymentSlip.path),
+        );
+      }
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
@@ -382,6 +383,28 @@ class ApiService {
           json.decode(response.body)['success'] == true;
     } catch (e) {
       print('API Error (Delete FCM Token): $e');
+    }
+    return false;
+  }
+
+  Future<bool> uploadPaymentSlip(int customerId, File paymentSlip) async {
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/upload_payment_slip.php'),
+      );
+      request.fields['customer_id'] = customerId.toString();
+      request.files.add(
+        await http.MultipartFile.fromPath('payment_slip', paymentSlip.path),
+      );
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['success'] == true;
+      }
+    } catch (e) {
+      print('API Error (Upload Payment Slip): $e');
     }
     return false;
   }

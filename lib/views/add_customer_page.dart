@@ -22,8 +22,9 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
   final ApiService _apiService = ApiService();
   final NumberFormat _currencyFormat = NumberFormat("#,##0", "en_LK");
 
-  String _formatCurrency(double amount) => 'LKR ${_currencyFormat.format(amount)}';
-  
+  String _formatCurrency(double amount) =>
+      'LKR ${_currencyFormat.format(amount)}';
+
   final TextEditingController _comNameController = TextEditingController();
   final TextEditingController _comAddressController = TextEditingController();
   final TextEditingController _comNumberController = TextEditingController();
@@ -35,7 +36,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
   final TextEditingController _featuresController = TextEditingController();
   final TextEditingController _discountController = TextEditingController();
   final TextEditingController _finalAmountController = TextEditingController();
-  
+
   String? _selectedReference;
   String _selectedLang = 'English';
 
@@ -44,9 +45,13 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
   List<ResellPackageModule> _selectedModules = [];
 
   double get _packageAmount => _selectedPackage?.packageAmount ?? 0.0;
-  double get _modulesAmount => _selectedModules.fold(0, (sum, m) => sum + m.modulePrice);
+  double get _modulesAmount =>
+      _selectedModules.fold(0, (sum, m) => sum + m.modulePrice);
   double get _totalBeforeDiscount => _packageAmount + _modulesAmount;
-  double get _discountValue => _totalBeforeDiscount * (double.tryParse(_discountController.text) ?? 0) / 100;
+  double get _discountValue =>
+      _totalBeforeDiscount *
+      (double.tryParse(_discountController.text) ?? 0) /
+      100;
   double get _calculatedTotal => _totalBeforeDiscount - _discountValue;
 
   @override
@@ -64,7 +69,9 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
       if (cached != null) {
         final List<dynamic> decoded = json.decode(cached);
         setState(() {
-          _availablePackages = decoded.map((e) => ResellPackage.fromJson(e)).toList();
+          _availablePackages = decoded
+              .map((e) => ResellPackage.fromJson(e))
+              .toList();
         });
       }
     } catch (e) {
@@ -97,7 +104,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
     'Tamil',
     'Sinhala',
     'Arabic',
-    'Hindi'
+    'Hindi',
   ];
 
   final List<String> _referenceOptions = [
@@ -106,12 +113,13 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
     'Customer Called me',
     'From Cold Calling',
     'From Visiting',
-    'From an Existing Client'
+    'From an Existing Client',
   ];
 
   File? _paymentSlip;
   String? _fileName;
   bool _isLoading = false;
+  bool _isPaid = false;
 
   Future<void> _pickFile() async {
     try {
@@ -133,19 +141,25 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
     } catch (e) {
       print('DEBUG: File picker error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('FILE PICKER ERROR: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('FILE PICKER ERROR: $e')));
       }
     }
   }
 
-  void _showDescriptionDialog(BuildContext context, String title, String description) {
+  void _showDescriptionDialog(
+    BuildContext context,
+    String title,
+    String description,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-        content: Text(description.isNotEmpty ? description : 'NO DESCRIPTION AVAILABLE'),
+        content: Text(
+          description.isNotEmpty ? description : 'NO DESCRIPTION AVAILABLE',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -164,26 +178,56 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
         const SizedBox(height: 16),
         DropdownButtonFormField<ResellPackage>(
           value: _selectedPackage,
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Colors.black),
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 14,
+            color: Colors.black,
+          ),
           decoration: InputDecoration(
             labelText: 'SELECT PACKAGE',
-            labelStyle: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
-            prefixIcon: const Icon(Icons.inventory_2_outlined, size: 18, color: Colors.black),
+            labelStyle: TextStyle(
+              color: Colors.black.withOpacity(0.4),
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1,
+            ),
+            prefixIcon: const Icon(
+              Icons.inventory_2_outlined,
+              size: 18,
+              color: Colors.black,
+            ),
             filled: true,
             fillColor: Colors.black.withOpacity(0.03),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            suffixIcon: _selectedPackage != null 
-              ? IconButton(
-                  icon: const Icon(Icons.info_outline, size: 18, color: Colors.blue),
-                  onPressed: () => _showDescriptionDialog(context, _selectedPackage!.packageName, _selectedPackage!.description),
-                )
-              : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 16,
+            ),
+            suffixIcon: _selectedPackage != null
+                ? IconButton(
+                    icon: const Icon(
+                      Icons.info_outline,
+                      size: 18,
+                      color: Colors.blue,
+                    ),
+                    onPressed: () => _showDescriptionDialog(
+                      context,
+                      _selectedPackage!.packageName,
+                      _selectedPackage!.description,
+                    ),
+                  )
+                : null,
           ),
           items: _availablePackages.map((ResellPackage pkg) {
             return DropdownMenuItem<ResellPackage>(
               value: pkg,
-              child: Text(pkg.packageName.toUpperCase(), style: const TextStyle(fontSize: 11)),
+              child: Text(
+                pkg.packageName.toUpperCase(),
+                style: const TextStyle(fontSize: 11),
+              ),
             );
           }).toList(),
           onChanged: (ResellPackage? newValue) {
@@ -195,11 +239,17 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
           },
           validator: (value) => value == null ? 'REQUIRED' : null,
         ),
-        if (_selectedPackage != null && _selectedPackage!.modules.isNotEmpty) ...[
+        if (_selectedPackage != null &&
+            _selectedPackage!.modules.isNotEmpty) ...[
           const SizedBox(height: 24),
           Text(
             'ADDITIONAL MODULES',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1, color: Colors.black.withOpacity(0.4)),
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1,
+              color: Colors.black.withOpacity(0.4),
+            ),
           ),
           const SizedBox(height: 12),
           Container(
@@ -216,7 +266,9 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Column(
                   children: [
-                    ..._selectedPackage!.modules.map((m) => _buildModuleCheckbox(m)),
+                    ..._selectedPackage!.modules.map(
+                      (m) => _buildModuleCheckbox(m),
+                    ),
                   ],
                 ),
               ),
@@ -230,20 +282,39 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
               child: TextFormField(
                 controller: _discountController,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 14,
+                ),
                 decoration: InputDecoration(
                   labelText: 'DISCOUNT % (OPTIONAL)',
-                  labelStyle: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
-                  prefixIcon: const Icon(Icons.percent, size: 18, color: Colors.black),
+                  labelStyle: TextStyle(
+                    color: Colors.black.withOpacity(0.4),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.percent,
+                    size: 18,
+                    color: Colors.black,
+                  ),
                   filled: true,
                   fillColor: Colors.black.withOpacity(0.03),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) return null;
                   final discount = double.tryParse(value);
-                  if (discount == null || discount < 0 || discount > 100) return '0 - 100%';
+                  if (discount == null || discount < 0 || discount > 100)
+                    return '0 - 100%';
                   return null;
                 },
               ),
@@ -255,25 +326,50 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                   TextFormField(
                     controller: _finalAmountController,
                     keyboardType: TextInputType.number,
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 14,
+                    ),
                     onChanged: (value) => setState(() {}),
                     decoration: InputDecoration(
                       labelText: 'FINAL AMOUNT',
-                      labelStyle: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
-                      prefixIcon: const Icon(Icons.payments_outlined, size: 18, color: Colors.black),
+                      labelStyle: TextStyle(
+                        color: Colors.black.withOpacity(0.4),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.payments_outlined,
+                        size: 18,
+                        color: Colors.black,
+                      ),
                       filled: true,
                       fillColor: Colors.black.withOpacity(0.03),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
                     ),
                   ),
-                  if (double.tryParse(_finalAmountController.text) != null && 
-                      (double.tryParse(_finalAmountController.text)! - _calculatedTotal).abs() > 0.01)
+                  if (double.tryParse(_finalAmountController.text) != null &&
+                      (double.tryParse(_finalAmountController.text)! -
+                                  _calculatedTotal)
+                              .abs() >
+                          0.01)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         'WARNING: DIFFERENCE OF LKR ${(double.tryParse(_finalAmountController.text)! - _calculatedTotal).abs().toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 9, color: Colors.red, fontWeight: FontWeight.w900),
+                        style: const TextStyle(
+                          fontSize: 9,
+                          color: Colors.red,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ),
                 ],
@@ -310,7 +406,9 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
           decoration: BoxDecoration(
             color: isSelected ? Colors.black : Colors.black.withOpacity(0.02),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isSelected ? Colors.black : Colors.black.withOpacity(0.05)),
+            border: Border.all(
+              color: isSelected ? Colors.black : Colors.black.withOpacity(0.05),
+            ),
           ),
           child: Row(
             children: [
@@ -331,10 +429,18 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.info_outline, size: 14, color: isSelected ? Colors.white70 : Colors.black38),
+                icon: Icon(
+                  Icons.info_outline,
+                  size: 14,
+                  color: isSelected ? Colors.white70 : Colors.black38,
+                ),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
-                onPressed: () => _showDescriptionDialog(context, module.moduleName, module.moduleDescription),
+                onPressed: () => _showDescriptionDialog(
+                  context,
+                  module.moduleName,
+                  module.moduleDescription,
+                ),
               ),
               const SizedBox(width: 8),
               Text(
@@ -364,7 +470,10 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
           _buildBreakdownRow('Package', _packageAmount),
           if (_selectedModules.isNotEmpty)
             _buildBreakdownRow('Additional Modules', _modulesAmount),
-          _buildBreakdownRow('Discount (${_discountController.text.isEmpty ? "0" : _discountController.text}%)', -_discountValue),
+          _buildBreakdownRow(
+            'Discount (${_discountController.text.isEmpty ? "0" : _discountController.text}%)',
+            -_discountValue,
+          ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(color: Colors.white24, height: 1),
@@ -375,7 +484,11 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
     );
   }
 
-  Widget _buildBreakdownRow(String label, double amount, {bool isTotal = false}) {
+  Widget _buildBreakdownRow(
+    String label,
+    double amount, {
+    bool isTotal = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -405,8 +518,8 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
-    
-    if (_paymentSlip == null) {
+
+    if (_isPaid && _paymentSlip == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('PLEASE UPLOAD PAYMENT SLIP')),
       );
@@ -417,11 +530,19 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
 
     try {
       // Clean numbers: remove all non-digits AND leading zero
-      String cleanComNumber = _comNumberController.text.replaceAll(RegExp(r'\D'), '');
-      if (cleanComNumber.startsWith('0')) cleanComNumber = cleanComNumber.substring(1);
+      String cleanComNumber = _comNumberController.text.replaceAll(
+        RegExp(r'\D'),
+        '',
+      );
+      if (cleanComNumber.startsWith('0'))
+        cleanComNumber = cleanComNumber.substring(1);
 
-      String cleanAdminNumber = _adminNumberController.text.replaceAll(RegExp(r'\D'), '');
-      if (cleanAdminNumber.startsWith('0')) cleanAdminNumber = cleanAdminNumber.substring(1);
+      String cleanAdminNumber = _adminNumberController.text.replaceAll(
+        RegExp(r'\D'),
+        '',
+      );
+      if (cleanAdminNumber.startsWith('0'))
+        cleanAdminNumber = cleanAdminNumber.substring(1);
 
       final customer = Customer(
         partnerId: 0, // We will use the mobile number instead in the API call
@@ -443,7 +564,11 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
       );
 
       // Pass the phone number directly to the API service
-      final success = await _apiService.addCustomer(customer, _paymentSlip!, partnerMobile: widget.phoneNumber);
+      final success = await _apiService.addCustomer(
+        customer,
+        _paymentSlip,
+        partnerMobile: widget.phoneNumber,
+      );
 
       if (success) {
         if (mounted) {
@@ -457,9 +582,9 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ERROR: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('ERROR: ${e.toString()}')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -469,9 +594,10 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
   String _formatFeaturesString() {
     String features = _featuresController.text;
     if (_selectedPackage != null) {
-      String pkgInfo = "\n\nPACKAGE: ${_selectedPackage!.packageName}"
-                      "\nMODULES: ${_selectedModules.map((m) => m.moduleName).join(', ')}"
-                      "\nTOTAL: LKR ${_calculatedTotal.toStringAsFixed(2)}";
+      String pkgInfo =
+          "\n\nPACKAGE: ${_selectedPackage!.packageName}"
+          "\nMODULES: ${_selectedModules.map((m) => m.moduleName).join(', ')}"
+          "\nTOTAL: LKR ${_calculatedTotal.toStringAsFixed(2)}";
       features += pkgInfo;
     }
     return features;
@@ -485,80 +611,147 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.black,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'ADD NEW CUSTOMER',
-          style: TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.5),
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.5,
+          ),
         ),
         centerTitle: true,
       ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator(color: Colors.black))
-        : SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionTitle('COMPANY INFORMATION'),
-                  const SizedBox(height: 16),
-                  _buildTextField(_comNameController, 'COMPANY NAME', Icons.business),
-                  const SizedBox(height: 16),
-                  _buildPhoneField(_comNumberController, 'COMPANY NUMBER'),
-                  const SizedBox(height: 16),
-                  _buildTextField(_comAreaController, 'COMPANY AREA', Icons.map),
-                  const SizedBox(height: 16),
-                  _buildTextField(_comAddressController, 'COMPANY ADDRESS', Icons.location_on),
-                  const SizedBox(height: 16),
-                  _buildTextField(_comFieldController, 'BUSINESS FIELD', Icons.category),
-                  
-                  const SizedBox(height: 32),
-                  _buildSectionTitle('OWNER INFORMATION'),
-                  const SizedBox(height: 16),
-                  _buildTextField(_adminNameController, 'OWNER NAME', Icons.person),
-                  const SizedBox(height: 16),
-                  _buildPhoneField(_adminNumberController, 'OWNER NUMBER'),
-                  
-                  const SizedBox(height: 32),
-                  _buildPackageDetailsSection(),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.black))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('COMPANY INFORMATION'),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      _comNameController,
+                      'COMPANY NAME',
+                      Icons.business,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildPhoneField(_comNumberController, 'COMPANY NUMBER'),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      _comAreaController,
+                      'COMPANY AREA',
+                      Icons.map,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      _comAddressController,
+                      'COMPANY ADDRESS',
+                      Icons.location_on,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      _comFieldController,
+                      'BUSINESS FIELD',
+                      Icons.category,
+                    ),
 
-                  const SizedBox(height: 32),
-                  _buildSectionTitle('ADDITIONAL DETAILS'),
-                  const SizedBox(height: 16),
-                  _buildTextField(_remarksController, 'REMARKS', Icons.notes, maxLines: 3, isOptional: true),
-                  const SizedBox(height: 16),
-                  _buildTextField(_featuresController, 'ADDITIONAL FEATURES', Icons.add_box, maxLines: 2, isOptional: true),
-                  const SizedBox(height: 16),
-                  _buildLanguageDropdown(),
-                  const SizedBox(height: 16),
-                  _buildReferenceDropdown(),
-                  
-                  const SizedBox(height: 32),
-                  _buildSectionTitle('PAYMENT SLIP'),
-                  const SizedBox(height: 16),
-                  _buildFileUploadSection(),
-                  
-                  const SizedBox(height: 48),
-                  _buildSubmitButton(),
-                  const SizedBox(height: 40),
-                ],
+                    const SizedBox(height: 32),
+                    _buildSectionTitle('OWNER INFORMATION'),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      _adminNameController,
+                      'OWNER NAME',
+                      Icons.person,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildPhoneField(_adminNumberController, 'OWNER NUMBER'),
+
+                    const SizedBox(height: 32),
+                    _buildPackageDetailsSection(),
+
+                    const SizedBox(height: 32),
+                    _buildSectionTitle('ADDITIONAL DETAILS'),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      _remarksController,
+                      'REMARKS',
+                      Icons.notes,
+                      maxLines: 3,
+                      isOptional: true,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      _featuresController,
+                      'ADDITIONAL FEATURES',
+                      Icons.add_box,
+                      maxLines: 2,
+                      isOptional: true,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildLanguageDropdown(),
+                    const SizedBox(height: 16),
+                    _buildReferenceDropdown(),
+
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _isPaid,
+                          activeColor: Colors.black,
+                          onChanged: (val) =>
+                              setState(() => _isPaid = val ?? false),
+                        ),
+                        const Text(
+                          'CUSTOMER HAS PAID',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (_isPaid) ...[
+                      _buildFileUploadSection(),
+                      const SizedBox(height: 16),
+                    ],
+                    const SizedBox(height: 48),
+                    _buildSubmitButton(),
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
             ),
-          ),
     );
   }
 
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.black38),
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 1.5,
+        color: Colors.black38,
+      ),
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool isNumber = false, int maxLines = 1, bool isOptional = false}) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    bool isNumber = false,
+    int maxLines = 1,
+    bool isOptional = false,
+  }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
@@ -566,12 +759,23 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
       style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
       decoration: InputDecoration(
         labelText: isOptional ? '$label (OPTIONAL)' : label,
-        labelStyle: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
+        labelStyle: TextStyle(
+          color: Colors.black.withOpacity(0.4),
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1,
+        ),
         prefixIcon: Icon(icon, size: 18, color: Colors.black),
         filled: true,
         fillColor: Colors.black.withOpacity(0.03),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
       ),
       validator: (value) {
         if (isOptional && (value == null || value.isEmpty)) return null;
@@ -597,11 +801,22 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
       },
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
+        labelStyle: TextStyle(
+          color: Colors.black.withOpacity(0.4),
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1,
+        ),
         filled: true,
         fillColor: Colors.black.withOpacity(0.03),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
         counterText: '', // Hide default counter
       ),
       languageCode: "en",
@@ -620,26 +835,41 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.03),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.black.withOpacity(0.05), style: BorderStyle.solid),
+            border: Border.all(
+              color: Colors.black.withOpacity(0.05),
+              style: BorderStyle.solid,
+            ),
           ),
           child: Column(
             children: [
-              Icon(_paymentSlip == null ? Icons.cloud_upload_outlined : Icons.check_circle_outline, 
-                   size: 32, color: _paymentSlip == null ? Colors.black38 : Colors.green),
+              Icon(
+                _paymentSlip == null
+                    ? Icons.cloud_upload_outlined
+                    : Icons.check_circle_outline,
+                size: 32,
+                color: _paymentSlip == null ? Colors.black38 : Colors.green,
+              ),
               const SizedBox(height: 12),
               Text(
                 _fileName ?? 'TAP TO UPLOAD PAYMENT SLIP',
                 style: TextStyle(
-                  fontSize: 12, 
-                  fontWeight: FontWeight.w900, 
-                  color: _paymentSlip == null ? Colors.black38 : Colors.black
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: _paymentSlip == null ? Colors.black38 : Colors.black,
                 ),
                 textAlign: TextAlign.center,
               ),
               if (_fileName == null) ...[
                 const SizedBox(height: 4),
-                const Text('PDF, JPG OR PNG (MAX 5MB)', style: TextStyle(fontSize: 9, color: Colors.black26, fontWeight: FontWeight.w700)),
-              ]
+                const Text(
+                  'PDF, JPG OR PNG (MAX 5MB)',
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: Colors.black26,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -655,7 +885,9 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.black,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           elevation: 0,
         ),
         onPressed: _submitForm,
@@ -670,20 +902,38 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
   Widget _buildLanguageDropdown() {
     return DropdownButtonFormField<String>(
       value: _selectedLang,
-      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Colors.black),
+      style: const TextStyle(
+        fontWeight: FontWeight.w900,
+        fontSize: 14,
+        color: Colors.black,
+      ),
       decoration: InputDecoration(
         labelText: 'PREFERRED LANGUAGE',
-        labelStyle: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
+        labelStyle: TextStyle(
+          color: Colors.black.withOpacity(0.4),
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1,
+        ),
         prefixIcon: const Icon(Icons.language, size: 18, color: Colors.black),
         filled: true,
         fillColor: Colors.black.withOpacity(0.03),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
       ),
       items: _langOptions.map((String value) {
         return DropdownMenuItem<String>(
           value: value,
-          child: Text(value.toUpperCase(), style: const TextStyle(fontSize: 11)),
+          child: Text(
+            value.toUpperCase(),
+            style: const TextStyle(fontSize: 11),
+          ),
         );
       }).toList(),
       onChanged: (newValue) {
@@ -696,20 +946,42 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
   Widget _buildReferenceDropdown() {
     return DropdownButtonFormField<String>(
       value: _selectedReference,
-      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Colors.black),
+      style: const TextStyle(
+        fontWeight: FontWeight.w900,
+        fontSize: 14,
+        color: Colors.black,
+      ),
       decoration: InputDecoration(
         labelText: 'HOW DID YOU GET TO KNOW THIS CLIENT?',
-        labelStyle: TextStyle(color: Colors.black.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
-        prefixIcon: const Icon(Icons.help_outline, size: 18, color: Colors.black),
+        labelStyle: TextStyle(
+          color: Colors.black.withOpacity(0.4),
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1,
+        ),
+        prefixIcon: const Icon(
+          Icons.help_outline,
+          size: 18,
+          color: Colors.black,
+        ),
         filled: true,
         fillColor: Colors.black.withOpacity(0.03),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
       ),
       items: _referenceOptions.map((String value) {
         return DropdownMenuItem<String>(
           value: value,
-          child: Text(value.toUpperCase(), style: const TextStyle(fontSize: 11)),
+          child: Text(
+            value.toUpperCase(),
+            style: const TextStyle(fontSize: 11),
+          ),
         );
       }).toList(),
       onChanged: (newValue) {

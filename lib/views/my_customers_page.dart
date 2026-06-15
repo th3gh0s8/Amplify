@@ -8,6 +8,8 @@ import '../database/database_helper.dart';
 import '../widgets/system_overlay_wrapper.dart';
 import '../utils/format_utils.dart';
 import 'dart:async';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 
 class MyCustomersPage extends StatefulWidget {
   final String phoneNumber;
@@ -23,6 +25,7 @@ class _MyCustomersPageState extends State<MyCustomersPage> {
   bool _isLoading = true;
   String _selectedFilter = 'ALL'; // 'ALL', 'APPROVED', 'PENDING'
   StreamSubscription? _customerSubscription;
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -92,6 +95,67 @@ class _MyCustomersPageState extends State<MyCustomersPage> {
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _pickAndUploadSlip(
+    int customerId,
+    StateSetter setSheetState,
+  ) async {
+    try {
+      FilePickerResult? result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+      );
+      if (result == null) return;
+
+      setSheetState(() => _isUploading = true);
+
+      File file = File(result.files.single.path!);
+      bool success = await _apiService.uploadPaymentSlip(customerId, file);
+
+      if (success) {
+        final index = _customers.indexWhere((c) => c.id == customerId);
+        if (index != -1) {
+          setState(() {
+            _customers[index] = Customer(
+              id: _customers[index].id,
+              partnerId: _customers[index].partnerId,
+              companyName: _customers[index].companyName,
+              companyAddress: _customers[index].companyAddress,
+              companyNumber: _customers[index].companyNumber,
+              adminName: _customers[index].adminName,
+              adminNumber: _customers[index].adminNumber,
+              companyArea: _customers[index].companyArea,
+              companyField: _customers[index].companyField,
+              remarks: _customers[index].remarks,
+              additionalFeatures: _customers[index].additionalFeatures,
+              status: _customers[index].status,
+              reference: _customers[index].reference,
+              preferredLang: _customers[index].preferredLang,
+              packageName: _customers[index].packageName,
+              additionalPackages: _customers[index].additionalPackages,
+              discount: _customers[index].discount,
+              totalCost: _customers[index].totalCost,
+              paymentSlip: file.path, // Hot load path
+            );
+          });
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('PAYMENT SLIP UPLOADED')));
+        _fetchCustomers(); // Sync local cache in background
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('UPLOAD FAILED')));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('ERROR: $e')));
+    } finally {
+      setSheetState(() => _isUploading = false);
     }
   }
 
@@ -328,110 +392,191 @@ class _MyCustomersPageState extends State<MyCustomersPage> {
     );
   }
 
-  void _showCustomerDetails(Customer client) {
+  void _showCustomerDetails(Customer initialClient) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.9,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.black12,
-                borderRadius: BorderRadius.circular(2),
-              ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          final client = _customers.firstWhere(
+            (c) => c.id == initialClient.id,
+            orElse: () => initialClient,
+          );
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.9,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
             ),
-            const SizedBox(height: 24),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 80),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 80),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            client.companyName.toUpperCase(),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 20,
-                              letterSpacing: -0.5,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                client.companyName.toUpperCase(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 20,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
                             ),
+                            if (client.status == 'APPROVED')
+                              const Icon(
+                                Icons.verified,
+                                color: Colors.blue,
+                                size: 24,
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'STATUS: ${client.status}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 10,
+                            color: client.status == 'APPROVED'
+                                ? Colors.green
+                                : Colors.orange,
+                            letterSpacing: 1,
                           ),
                         ),
-                        if (client.status == 'APPROVED')
-                          const Icon(
-                            Icons.verified,
-                            color: Colors.blue,
-                            size: 24,
+                        const SizedBox(height: 32),
+                        _buildSectionTitle('COMPANY INFORMATION'),
+                        _buildDetailRow('Address', client.companyAddress),
+                        _buildDetailRow('Phone', client.companyNumber),
+                        _buildDetailRow('Area', client.companyArea),
+                        _buildDetailRow('Field/Industry', client.companyField),
+                        const SizedBox(height: 24),
+                        _buildSectionTitle('ADMIN CONTACT'),
+                        _buildDetailRow('Name', client.adminName),
+                        _buildDetailRow('Phone', client.adminNumber),
+                        const SizedBox(height: 24),
+                        _buildSectionTitle('PACKAGE DETAILS'),
+                        _buildDetailRow('Package', client.packageName ?? 'N/A'),
+                        _buildDetailRow(
+                          'Additional Modules',
+                          client.additionalPackages?.isNotEmpty == true
+                              ? client.additionalPackages!
+                              : 'N/A',
+                        ),
+                        _buildDetailRow(
+                          'Discount',
+                          '${client.discount?.toStringAsFixed(0) ?? '0'}%',
+                        ),
+                        _buildDetailRow(
+                          'Total',
+                          FormatUtils.formatCurrency(client.totalCost ?? 0),
+                        ),
+                        const SizedBox(height: 24),
+                        _buildSectionTitle('ADDITIONAL DETAILS'),
+                        _buildDetailRow(
+                          'Preferred Language',
+                          client.preferredLang,
+                        ),
+                        _buildDetailRow('Reference Source', client.reference),
+                        const SizedBox(height: 16),
+                        _buildDetailRow('Remarks', client.remarks),
+                        const SizedBox(height: 8),
+
+                        const SizedBox(height: 24),
+                        _buildSectionTitle('PAYMENT STATUS'),
+                        if (client.paymentSlip != null &&
+                            client.paymentSlip!.isNotEmpty) ...[
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.check_circle,
+                                color: Colors.green,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'SLIP UPLOADED: ${client.paymentSlip!.split("/").last}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'STATUS: ${client.status}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 10,
-                        color: client.status == 'APPROVED'
-                            ? Colors.green
-                            : Colors.orange,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    _buildSectionTitle('COMPANY INFORMATION'),
-                    _buildDetailRow('Address', client.companyAddress),
-                    _buildDetailRow('Phone', client.companyNumber),
-                    _buildDetailRow('Area', client.companyArea),
-                    _buildDetailRow('Field/Industry', client.companyField),
-                    const SizedBox(height: 24),
-                    _buildSectionTitle('ADMIN CONTACT'),
-                    _buildDetailRow('Name', client.adminName),
-                    _buildDetailRow('Phone', client.adminNumber),
-                    const SizedBox(height: 24),
-                    _buildSectionTitle('PACKAGE DETAILS'),
-                    _buildDetailRow('Package', client.packageName ?? 'N/A'),
-                    _buildDetailRow(
-                      'Additional Modules',
-                      client.additionalPackages?.isNotEmpty == true
-                          ? client.additionalPackages!
-                          : 'N/A',
-                    ),
-                    _buildDetailRow(
-                      'Discount',
-                      '${client.discount?.toStringAsFixed(0) ?? '0'}%',
-                    ),
-                    _buildDetailRow(
-                      'Total',
-                      FormatUtils.formatCurrency(client.totalCost ?? 0),
-                    ),
-                    const SizedBox(height: 24),
-                    _buildSectionTitle('ADDITIONAL DETAILS'),
-                    _buildDetailRow('Preferred Language', client.preferredLang),
-                    _buildDetailRow('Reference Source', client.reference),
-                    const SizedBox(height: 16),
-                    _buildDetailRow('Remarks', client.remarks),
-                    const SizedBox(height: 8),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+                        ] else if (_isUploading) ...[
+                          const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.black,
+                            ),
+                          ),
+                        ] else ...[
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                color: Colors.red,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'NO SLIP UPLOADED',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 44,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              icon: const Icon(
+                                Icons.cloud_upload_outlined,
+                                size: 18,
+                              ),
+                              label: const Text('UPLOAD PAYMENT SLIP'),
+                              onPressed: () =>
+                                  _pickAndUploadSlip(client.id!, setSheetState),
+                            ),
+                          ),
+                        ], // ends spread operator
+                      ], // ends children list of inner Column
+                    ), // ends inner Column
+                  ), // ends SingleChildScrollView
+                ), // ends Expanded
+              ], // ends outer Column children list
+            ), // ends outer Column
+          ); // ends Container
+        }, // ends StatefulBuilder builder function
+      ), // ends StatefulBuilder
+    ); // ends showModalBottomSheet
   }
 
   Widget _buildSectionTitle(String title) {
