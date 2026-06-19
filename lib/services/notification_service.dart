@@ -4,12 +4,34 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'session_manager.dart';
 import 'api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // If you're going to use other Firebase services in the background, such as Firestore,
   // make sure you call `initializeApp` before using other Firebase services.
   debugPrint("Handling a background message: ${message.messageId}");
+  try {
+    final notification = message.notification;
+    if (notification != null) {
+      final title = notification.title ?? '';
+      final body = notification.body ?? '';
+      if (title.isNotEmpty || body.isNotEmpty) {
+        final key =
+            '${title.toLowerCase().trim()}|${body.toLowerCase().trim()}';
+        final prefs = await SharedPreferences.getInstance();
+        final list = prefs.getStringList('recent_shown_notifications') ?? [];
+        if (!list.contains(key)) {
+          list.add(key);
+          if (list.length > 20) list.removeAt(0); // keep cache size small
+          await prefs.setStringList('recent_shown_notifications', list);
+          debugPrint('[FCM Background] Stored notification key: $key');
+        }
+      }
+    }
+  } catch (e) {
+    debugPrint('Error in background handler: $e');
+  }
 }
 
 class NotificationService {
@@ -115,6 +137,24 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
+    final key = '${title.toLowerCase().trim()}|${body.toLowerCase().trim()}';
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = prefs.getStringList('recent_shown_notifications') ?? [];
+
+      if (list.contains(key)) {
+        debugPrint(
+          '[NotificationService] Suppressing duplicate notification: $title',
+        );
+        return; // Stop execution to suppress duplication
+      }
+
+      list.add(key);
+      if (list.length > 20) list.removeAt(0);
+      await prefs.setStringList('recent_shown_notifications', list);
+    } catch (e) {
+      debugPrint('Error checking duplicate in showNotification: $e');
+    }
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
           'xpower_notifications_v2',

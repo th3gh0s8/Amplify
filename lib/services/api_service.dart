@@ -8,11 +8,13 @@ import '../models/resell_package.dart';
 
 class ApiService {
   static const String baseUrl = 'https://powersoftt.com/xPowerPartners';
+  final http.Client client;
+  ApiService({http.Client? client}) : client = client ?? http.Client();
 
   Future<Partner?> getProfile(String mobileNo) async {
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await http.get(
+      final response = await client.get(
         Uri.parse('$baseUrl/get_profile.php?mobile_no=$mobileNo&t=$timestamp'),
       );
 
@@ -35,7 +37,7 @@ class ApiService {
 
   Future<bool> updateProfile(Partner partner) async {
     try {
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/update_profile.php'),
         body: json.encode(partner.toJson()),
         headers: {'Content-Type': 'application/json'},
@@ -67,7 +69,7 @@ class ApiService {
         }
       });
 
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/register_partner.php'),
         body: body,
       );
@@ -84,7 +86,7 @@ class ApiService {
 
   Future<Map<String, dynamic>?> verifyOTP(String mobileNo, String otp) async {
     try {
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/verify_otp.php'),
         body: {'mobile_no': mobileNo, 'otp_code': otp},
       );
@@ -103,7 +105,7 @@ class ApiService {
   Future<Partner?> getPartner(String mobileNo) async {
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await http.get(
+      final response = await client.get(
         Uri.parse('$baseUrl/get_partner.php?mobile_no=$mobileNo&t=$timestamp'),
       );
 
@@ -126,7 +128,7 @@ class ApiService {
 
   Future<List<ResellPackage>> getPackages() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/get_packages.php'));
+      final response = await client.get(Uri.parse('$baseUrl/get_packages.php'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success']) {
@@ -144,7 +146,7 @@ class ApiService {
   Future<List<Map<String, dynamic>>> getPayouts(String mobileNo) async {
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await http.get(
+      final response = await client.get(
         Uri.parse('$baseUrl/get_payouts.php?mobile_no=$mobileNo&t=$timestamp'),
       );
       if (response.statusCode == 200) {
@@ -164,7 +166,7 @@ class ApiService {
     double amount,
   ) async {
     try {
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/request_payout.php'),
         body: json.encode({'mobile_no': mobileNo, 'amount': amount}),
         headers: {'Content-Type': 'application/json'},
@@ -181,7 +183,7 @@ class ApiService {
   Future<Map<String, dynamic>?> getDashboardData(String mobileNo) async {
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await http.get(
+      final response = await client.get(
         Uri.parse(
           '$baseUrl/get_dashboard_data.php?mobile_no=$mobileNo&t=$timestamp',
         ),
@@ -199,7 +201,7 @@ class ApiService {
   Future<List<Invoice>> getInvoices(String mobileNo) async {
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await http.get(
+      final response = await client.get(
         Uri.parse('$baseUrl/get_invoices.php?mobile_no=$mobileNo&t=$timestamp'),
       );
       if (response.statusCode == 200) {
@@ -220,7 +222,7 @@ class ApiService {
   Future<List<Map<String, dynamic>>> getCustomers(String mobileNo) async {
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await http.get(
+      final response = await client.get(
         Uri.parse(
           '$baseUrl/get_customers.php?mobile_no=$mobileNo&t=$timestamp',
         ),
@@ -241,7 +243,7 @@ class ApiService {
   Future<List<Map<String, dynamic>>> getNotifications(String mobileNo) async {
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await http.get(
+      final response = await client.get(
         Uri.parse(
           '$baseUrl/get_notifications.php?mobile_no=$mobileNo&t=$timestamp',
         ),
@@ -261,7 +263,7 @@ class ApiService {
 
   Future<bool> markNotificationsAsRead(String mobileNo) async {
     try {
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/mark_notifications_read.php'),
         body: json.encode({'mobile_no': mobileNo}),
         headers: {'Content-Type': 'application/json'},
@@ -282,7 +284,7 @@ class ApiService {
     int notificationId,
   ) async {
     try {
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/mark_notification_single_read.php'),
         body: json.encode({
           'mobile_no': mobileNo,
@@ -335,7 +337,7 @@ class ApiService {
         );
       }
 
-      var streamedResponse = await request.send();
+      var streamedResponse = await client.send(request);
       var response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 200) {
@@ -357,7 +359,7 @@ class ApiService {
 
   Future<bool> updateFcmToken(String mobileNo, String token) async {
     try {
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/update_fcm_token.php'),
         body: json.encode({'mobile_no': mobileNo, 'fcm_token': token}),
         headers: {'Content-Type': 'application/json'},
@@ -374,7 +376,7 @@ class ApiService {
 
   Future<bool> deleteFcmToken(String token) async {
     try {
-      final response = await http.post(
+      final response = await client.post(
         Uri.parse('$baseUrl/delete_fcm_token.php'),
         body: json.encode({'fcm_token': token}),
         headers: {'Content-Type': 'application/json'},
@@ -397,7 +399,7 @@ class ApiService {
       request.files.add(
         await http.MultipartFile.fromPath('payment_slip', paymentSlip.path),
       );
-      var streamedResponse = await request.send();
+      var streamedResponse = await client.send(request);
       var response = await http.Response.fromStream(streamedResponse);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

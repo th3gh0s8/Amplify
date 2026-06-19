@@ -6,11 +6,11 @@ import 'otp_verification_page.dart';
 class RegistrationPage extends StatefulWidget {
   final String mobileNo;
   final String countryCode;
-  
+
   const RegistrationPage({
-    super.key, 
-    required this.mobileNo, 
-    required this.countryCode
+    super.key,
+    required this.mobileNo,
+    required this.countryCode,
   });
 
   @override
@@ -38,9 +38,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
         cCode: widget.countryCode.replaceAll('+', ''),
         mobileNo: widget.mobileNo.replaceAll(RegExp(r'\D'), ''),
         email: _emailController.text.trim(),
-        bankAccountNo: '0', 
-        bankName: '',     
-        bankBranch: '', 
+        bankAccountNo: '0',
+        bankName: '',
+        bankBranch: '',
         remarks: '',
       );
 
@@ -55,7 +55,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
             MaterialPageRoute(
               builder: (context) => OTPVerificationPage(
                 phoneNumber: partner.mobileNo,
-                displayPhoneNumber: '${widget.countryCode} ${widget.mobileNo}'
+                displayPhoneNumber: '${widget.countryCode} ${widget.mobileNo}',
               ),
             ),
           );
@@ -63,16 +63,16 @@ class _RegistrationPageState extends State<RegistrationPage> {
       } else {
         if (mounted) {
           String errorMsg = response?['message'] ?? 'REGISTRATION FAILED';
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMsg.toUpperCase())),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(errorMsg.toUpperCase())));
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ERROR: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('ERROR: ${e.toString()}')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -106,7 +106,11 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 const SizedBox(height: 40),
                 const Text(
                   'JOIN XPOWER',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -1.5),
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1.5,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -124,12 +128,15 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 _buildField('LAST NAME', _lastNameController),
                 const SizedBox(height: 24),
                 _buildField(
-                  'EMAIL ADDRESS', 
-                  _emailController, 
+                  'EMAIL ADDRESS',
+                  _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  textCapitalization: TextCapitalization.none,
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'FIELD REQUIRED';
-                    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                    final emailRegex = RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    );
                     if (!emailRegex.hasMatch(v)) return 'INVALID EMAIL FORMAT';
                     return null;
                   },
@@ -144,7 +151,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         ? const SizedBox(
                             height: 20,
                             width: 20,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 3,
+                            ),
                           )
                         : const Text('INITIALIZE PARTNERSHIP'),
                   ),
@@ -157,24 +167,40 @@ class _RegistrationPageState extends State<RegistrationPage> {
     );
   }
 
-  Widget _buildField(String label, TextEditingController controller, {TextInputType? keyboardType, String? Function(String?)? validator}) {
+  Widget _buildField(
+    String label,
+    TextEditingController controller, {
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    TextCapitalization textCapitalization = TextCapitalization.words,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.black38),
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.5,
+            color: Colors.black38,
+          ),
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
+          textCapitalization: textCapitalization,
           style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
           decoration: const InputDecoration(
             contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 12),
             filled: false,
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black12)),
-            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black, width: 2)),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.black12),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.black, width: 2),
+            ),
           ),
           validator: validator ?? (v) => v!.isEmpty ? 'FIELD REQUIRED' : null,
         ),
