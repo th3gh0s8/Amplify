@@ -13,6 +13,7 @@ import printing
 import shared_preferences_foundation
 import sqflite_darwin
 
+/// Registers all generated third-party Flutter plugins with the provided registry.
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   FilePickerPlugin.register(with: registry.registrar(forPlugin: "FilePickerPlugin"))
   FLTFirebaseCorePlugin.register(with: registry.registrar(forPlugin: "FLTFirebaseCorePlugin"))
