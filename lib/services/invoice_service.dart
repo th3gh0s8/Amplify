@@ -57,7 +57,10 @@ class InvoiceService {
           .where((m) => m.isNotEmpty)
           .toList();
       for (final module in modules) {
-        features.add('$module Module Integration');
+        final feature = '$module Module Integration';
+        if (!features.contains(feature)) {
+          features.add(feature);
+        }
       }
     }
 
@@ -65,9 +68,10 @@ class InvoiceService {
       for (final line in customer.additionalFeatures.split('\n')) {
         final trimmed = line.trim();
         if (trimmed.isEmpty) continue;
-        if (trimmed.startsWith('PACKAGE:') ||
-            trimmed.startsWith('MODULES:') ||
-            trimmed.startsWith('TOTAL:')) {
+        final upperTrimmed = trimmed.toUpperCase();
+        if (upperTrimmed.startsWith('PACKAGE:') ||
+            upperTrimmed.startsWith('MODULES:') ||
+            upperTrimmed.startsWith('TOTAL:')) {
           continue;
         }
         if (!features.contains(trimmed)) {
