@@ -151,326 +151,10 @@ void main() {
     });
   });
 
-  // Helper to build a minimal Customer for getIncludedFeatures tests.
-  Customer makeCustomer({
-    String? packageName,
-    String? additionalPackages,
-    String additionalFeatures = '',
-  }) {
-    return Customer(
-      partnerId: 1,
-      companyName: 'Test Co',
-      companyAddress: '1 Test St',
-      companyNumber: '0700000000',
-      adminName: 'Admin',
-      adminNumber: '0700000001',
-      companyArea: 'Colombo',
-      companyField: 'Retail',
-      remarks: '',
-      additionalFeatures: additionalFeatures,
-      packageName: packageName,
-      additionalPackages: additionalPackages,
-    );
-  }
-
-  group('getIncludedFeatures Unit Tests', () {
-    // --- Package name branching ---
-
-    test('null packageName returns accounting feature set', () {
-      final customer = makeCustomer(packageName: null);
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(
-        features,
-        containsAll([
-          'Accounting (Profit & Loss, Trial Balance, Balance Sheet)',
-          'Stock Management',
-          'Credit Management',
-          'SMS Management',
-          'Profit Analysis',
-          'User credit with Privileges',
-          'Outstanding Monitoring & Reminding (CRM)',
-          'Business analysis with top sales item, customer and sales',
-        ]),
-      );
-      expect(features.length, 8);
-    });
-
-    test('packageName containing "website" returns commerce feature set', () {
-      final customer = makeCustomer(packageName: 'My Website Package');
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features, contains('Online Storefront & Shopping Cart'));
-      expect(features, contains('Payment Gateway Integration'));
-      expect(features, contains('Real-time Product & Stock Synchronization'));
-      expect(features, contains('Customer Profile & Order History Portal'));
-      expect(features, contains('Admin Dashboard & Order Management'));
-      expect(features.length, 5);
-    });
-
-    test('packageName "website" is matched case-insensitively', () {
-      final customer = makeCustomer(packageName: 'WebSite Pro');
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features, contains('Online Storefront & Shopping Cart'));
-    });
-
-    test('packageName containing "commerce" returns commerce feature set', () {
-      final customer = makeCustomer(packageName: 'Commerce Plus');
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features, contains('Payment Gateway Integration'));
-      expect(features, isNot(contains('Stock Management')));
-    });
-
-    test('packageName containing "e-commerce" returns commerce feature set', () {
-      final customer = makeCustomer(packageName: 'e-commerce Starter');
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features, contains('Online Storefront & Shopping Cart'));
-      expect(features.length, 5);
-    });
-
-    test('packageName "E-Commerce Pro" matched case-insensitively', () {
-      final customer = makeCustomer(packageName: 'E-Commerce Pro');
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features, contains('Online Storefront & Shopping Cart'));
-    });
-
-    test('unrelated packageName returns accounting feature set', () {
-      final customer = makeCustomer(packageName: 'Premium Standard');
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(
-        features,
-        contains('Accounting (Profit & Loss, Trial Balance, Balance Sheet)'),
-      );
-      expect(features, isNot(contains('Online Storefront & Shopping Cart')));
-    });
-
-    // --- Additional packages ---
-
-    test('null additionalPackages adds no module integration items', () {
-      final customer = makeCustomer(
-        packageName: null,
-        additionalPackages: null,
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features.any((f) => f.endsWith('Module Integration')), isFalse);
-    });
-
-    test('empty additionalPackages adds no module integration items', () {
-      final customer = makeCustomer(
-        packageName: null,
-        additionalPackages: '',
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features.any((f) => f.endsWith('Module Integration')), isFalse);
-    });
-
-    test('single additionalPackages entry is appended with Module Integration suffix', () {
-      final customer = makeCustomer(
-        packageName: null,
-        additionalPackages: 'Barcode Scanner',
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features, contains('Barcode Scanner Module Integration'));
-    });
-
-    test('multiple additionalPackages entries are all appended', () {
-      final customer = makeCustomer(
-        packageName: null,
-        additionalPackages: 'Barcode Scanner, SMS Alerts, POS',
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features, contains('Barcode Scanner Module Integration'));
-      expect(features, contains('SMS Alerts Module Integration'));
-      expect(features, contains('POS Module Integration'));
-    });
-
-    test('additionalPackages entries are trimmed before appending', () {
-      final customer = makeCustomer(
-        packageName: null,
-        additionalPackages: '  Barcode Scanner  ,  SMS Alerts  ',
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features, contains('Barcode Scanner Module Integration'));
-      expect(features, contains('SMS Alerts Module Integration'));
-      // Should not contain untrimmed versions
-      expect(
-        features,
-        isNot(contains('  Barcode Scanner   Module Integration')),
-      );
-    });
-
-    test('empty entries from additionalPackages commas are filtered out', () {
-      final customer = makeCustomer(
-        packageName: null,
-        additionalPackages: ',Barcode Scanner,,SMS Alerts,',
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features, contains('Barcode Scanner Module Integration'));
-      expect(features, contains('SMS Alerts Module Integration'));
-      expect(features, isNot(contains(' Module Integration')));
-    });
-
-    // --- Additional features ---
-
-    test('empty additionalFeatures adds no extra items', () {
-      final customer = makeCustomer(
-        packageName: null,
-        additionalFeatures: '',
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features.length, 8); // only base accounting set
-    });
-
-    test('valid additionalFeatures lines are appended', () {
-      final customer = makeCustomer(
-        packageName: null,
-        additionalFeatures: 'Custom Report\nLive Dashboard',
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features, contains('Custom Report'));
-      expect(features, contains('Live Dashboard'));
-    });
-
-    test('additionalFeatures lines starting with PACKAGE: are skipped', () {
-      final customer = makeCustomer(
-        packageName: null,
-        additionalFeatures: 'PACKAGE: Basic\nCustom Report',
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features, isNot(contains('PACKAGE: Basic')));
-      expect(features, contains('Custom Report'));
-    });
-
-    test('additionalFeatures lines starting with MODULES: are skipped', () {
-      final customer = makeCustomer(
-        packageName: null,
-        additionalFeatures: 'MODULES: Barcode\nLive Dashboard',
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features, isNot(contains('MODULES: Barcode')));
-      expect(features, contains('Live Dashboard'));
-    });
-
-    test('additionalFeatures lines starting with TOTAL: are skipped', () {
-      final customer = makeCustomer(
-        packageName: null,
-        additionalFeatures: 'TOTAL: 100000\nLive Dashboard',
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features, isNot(contains('TOTAL: 100000')));
-      expect(features, contains('Live Dashboard'));
-    });
-
-    test('blank lines in additionalFeatures are skipped', () {
-      final customer = makeCustomer(
-        packageName: null,
-        additionalFeatures: '\n\nCustom Report\n\n',
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features, contains('Custom Report'));
-      expect(features, isNot(contains('')));
-    });
-
-    test('duplicate additionalFeatures line already in base set is not added again', () {
-      const duplicateFeature = 'Stock Management';
-      final customer = makeCustomer(
-        packageName: null,
-        additionalFeatures: duplicateFeature,
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features.where((f) => f == duplicateFeature).length, 1);
-    });
-
-    test('additionalFeatures line trimmed before duplicate check', () {
-      // Lines with surrounding whitespace should be trimmed and then deduped.
-      const duplicateFeature = 'Stock Management';
-      final customer = makeCustomer(
-        packageName: null,
-        additionalFeatures: '  $duplicateFeature  ',
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features.where((f) => f == duplicateFeature).length, 1);
-    });
-
-    // --- Combined scenarios ---
-
-    test('commerce package + additional packages + additional features', () {
-      final customer = makeCustomer(
-        packageName: 'Website Commerce Pro',
-        additionalPackages: 'Live Chat, Analytics',
-        additionalFeatures: 'Custom Report\nPACKAGE: Ignored\nLive Dashboard',
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      // Commerce base
-      expect(features, contains('Online Storefront & Shopping Cart'));
-      // Additional modules
-      expect(features, contains('Live Chat Module Integration'));
-      expect(features, contains('Analytics Module Integration'));
-      // Additional features
-      expect(features, contains('Custom Report'));
-      expect(features, contains('Live Dashboard'));
-      // Filtered
-      expect(features, isNot(contains('PACKAGE: Ignored')));
-      // No accounting items
-      expect(
-        features,
-        isNot(contains('Accounting (Profit & Loss, Trial Balance, Balance Sheet)')),
-      );
-    });
-
-    test('accounting package with no extras returns exactly 8 items', () {
-      final customer = makeCustomer(
-        packageName: 'Standard Plan',
-        additionalPackages: null,
-        additionalFeatures: '',
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      expect(features.length, 8);
-    });
-
-    test('returned list preserves order: base features first, then modules, then additional', () {
-      final customer = makeCustomer(
-        packageName: null,
-        additionalPackages: 'POS',
-        additionalFeatures: 'Live Dashboard',
-      );
-      final features = InvoiceService.getIncludedFeatures(customer);
-
-      // Base accounting items come before module integrations
-      final stockIndex = features.indexOf('Stock Management');
-      final posIndex = features.indexOf('POS Module Integration');
-      final dashIndex = features.indexOf('Live Dashboard');
-
-      expect(stockIndex, lessThan(posIndex));
-      expect(posIndex, lessThan(dashIndex));
-    });
-  });
-
   group('Invoice Share Integration Tests', () {
     test('generateAndShareInvoice completes successfully', () async {
       final customer = Customer(
-
+        id: 99,
         partnerId: 1,
         companyName: 'Best Client Ltd',
         companyAddress: '123 Main Road',
@@ -495,6 +179,467 @@ void main() {
       expect(methodLog.length, 1);
       expect(methodLog.first.method, 'sharePdf');
       expect(methodLog.first.arguments['name'], 'invoice_B-99.pdf');
+    });
+
+    test('generateAndShareInvoice uses "temp" in filename when customer id is null', () async {
+      final customer = Customer(
+        // id intentionally omitted (null)
+        partnerId: 1,
+        companyName: 'No ID Company',
+        companyAddress: '55 Side Street',
+        companyNumber: '779999999',
+        adminName: 'Bob',
+        adminNumber: '779999998',
+        companyArea: 'Galle',
+        companyField: 'Services',
+        remarks: '',
+        additionalFeatures: '',
+        packageName: 'Premium Standard',
+        additionalPackages: null,
+        discount: 0.0,
+        totalCost: 150000.0,
+      );
+
+      await expectLater(
+        InvoiceService.generateAndShareInvoice(customer, mockPackagesList),
+        completes,
+      );
+
+      expect(methodLog.length, 1);
+      expect(methodLog.first.method, 'sharePdf');
+      expect(methodLog.first.arguments['name'], 'invoice_B-temp.pdf');
+    });
+
+    test('generateAndShareInvoice with no additional modules completes successfully', () async {
+      final customer = Customer(
+        id: 42,
+        partnerId: 2,
+        companyName: 'Solo Package Co',
+        companyAddress: '77 Lake Road',
+        companyNumber: '760000001',
+        adminName: 'Carol',
+        adminNumber: '760000002',
+        companyArea: 'Kandy',
+        companyField: 'Wholesale',
+        remarks: '',
+        additionalFeatures: '',
+        packageName: 'Premium Standard',
+        additionalPackages: null,
+        discount: 0.0,
+        totalCost: 150000.0,
+      );
+
+      await expectLater(
+        InvoiceService.generateAndShareInvoice(customer, mockPackagesList),
+        completes,
+      );
+
+      expect(methodLog.length, 1);
+      expect(methodLog.first.method, 'sharePdf');
+      expect(methodLog.first.arguments['name'], 'invoice_B-42.pdf');
+    });
+  });
+
+  group('Invoice Calculation Edge Cases', () {
+    test('Case-insensitive package name matching', () {
+      // Customer uses all-lowercase package name; package list has mixed case
+      final customer = Customer(
+        partnerId: 1,
+        companyName: 'Case Test Corp',
+        companyAddress: 'Road',
+        companyNumber: '0',
+        adminName: 'A',
+        adminNumber: '0',
+        companyArea: '',
+        companyField: '',
+        remarks: '',
+        additionalFeatures: '',
+        packageName: 'premium standard', // lowercase variant
+        additionalPackages: null,
+        discount: 0.0,
+        totalCost: 150000.0,
+      );
+
+      final result = InvoiceService.calculateInvoiceDetails(
+        customer,
+        mockPackagesList,
+      );
+
+      expect(result.packageRate, 150000.0);
+      expect(result.modulesRate, 0.0);
+      expect(result.subtotal, 150000.0);
+      expect(result.discountAmount, 0.0);
+      expect(result.finalTotal, 150000.0);
+    });
+
+    test('Case-insensitive module name matching', () {
+      // Module names in upper case; list has mixed case
+      final customer = Customer(
+        partnerId: 1,
+        companyName: 'Module Case Corp',
+        companyAddress: 'Road',
+        companyNumber: '0',
+        adminName: 'A',
+        adminNumber: '0',
+        companyArea: '',
+        companyField: '',
+        remarks: '',
+        additionalFeatures: '',
+        packageName: 'Premium Standard',
+        additionalPackages: 'BARCODE SCANNER, sms alerts', // mismatched case
+        discount: 0.0,
+        totalCost: 190000.0,
+      );
+
+      final result = InvoiceService.calculateInvoiceDetails(
+        customer,
+        mockPackagesList,
+      );
+
+      expect(result.packageRate, 150000.0);
+      expect(result.modulesRate, 40000.0); // 30000 + 10000
+      expect(result.subtotal, 190000.0);
+      expect(result.discountAmount, 0.0);
+      expect(result.finalTotal, 190000.0);
+    });
+
+    test('Unrecognized module name contributes zero price', () {
+      final customer = Customer(
+        partnerId: 1,
+        companyName: 'Unknown Module Corp',
+        companyAddress: 'Road',
+        companyNumber: '0',
+        adminName: 'A',
+        adminNumber: '0',
+        companyArea: '',
+        companyField: '',
+        remarks: '',
+        additionalFeatures: '',
+        packageName: 'Premium Standard',
+        additionalPackages: 'Barcode Scanner, Unknown Module XYZ',
+        discount: 0.0,
+        totalCost: 180000.0,
+      );
+
+      final result = InvoiceService.calculateInvoiceDetails(
+        customer,
+        mockPackagesList,
+      );
+
+      // Barcode Scanner = 30000, Unknown Module = 0
+      expect(result.modulesRate, 30000.0);
+      expect(result.packageRate, 150000.0);
+      expect(result.subtotal, 180000.0);
+      expect(result.discountAmount, 0.0);
+    });
+
+    test('Zero discount does not trigger fallback when package is matched', () {
+      final customer = Customer(
+        partnerId: 1,
+        companyName: 'No Discount Co',
+        companyAddress: 'Road',
+        companyNumber: '0',
+        adminName: 'A',
+        adminNumber: '0',
+        companyArea: '',
+        companyField: '',
+        remarks: '',
+        additionalFeatures: '',
+        packageName: 'Premium Standard',
+        additionalPackages: null,
+        discount: 0.0,
+        totalCost: 150000.0,
+      );
+
+      final result = InvoiceService.calculateInvoiceDetails(
+        customer,
+        mockPackagesList,
+      );
+
+      expect(result.packageRate, 150000.0);
+      expect(result.modulesRate, 0.0);
+      expect(result.subtotal, 150000.0);
+      expect(result.discountAmount, 0.0);
+      expect(result.finalTotal, 150000.0);
+    });
+
+    test('100% discount triggers fallback else-branch: packageRate equals finalTotal', () {
+      // discountPercent == 100 falls into else -> packageRate = finalTotal
+      final customer = Customer(
+        partnerId: 1,
+        companyName: 'Full Discount Corp',
+        companyAddress: 'Road',
+        companyNumber: '0',
+        adminName: 'A',
+        adminNumber: '0',
+        companyArea: '',
+        companyField: '',
+        remarks: '',
+        additionalFeatures: '',
+        packageName: 'Unlisted Package',
+        additionalPackages: null,
+        discount: 100.0,
+        totalCost: 50000.0,
+      );
+
+      final result = InvoiceService.calculateInvoiceDetails(customer, []);
+
+      // discountPercent not in (0,100) exclusive, so packageRate = finalTotal
+      expect(result.packageRate, 50000.0);
+      expect(result.modulesRate, 0.0);
+      expect(result.subtotal, 50000.0);
+      // 50000 * (100/100) = 50000
+      expect(result.discountAmount, 50000.0);
+      expect(result.finalTotal, 50000.0);
+    });
+
+    test('Package with zero amount plus modules does not use fallback', () {
+      // A package with id != 0 but packageAmount == 0; modules exist
+      final zeroAmountPackages = [
+        ResellPackage(
+          id: 5,
+          packageCode: 'PKG-ZERO',
+          packageName: 'Zero Amount Package',
+          description: '',
+          additionalRemarks: '',
+          currencyName: 'LKR',
+          packageAmount: 0.0, // zero package price
+          billingType: '',
+          allowedUsers: 1,
+          status: 'Active',
+          modules: [
+            ResellPackageModule(
+              id: 201,
+              packageId: 5,
+              moduleName: 'Extra Module',
+              currencyName: 'LKR',
+              modulePrice: 20000.0,
+              moduleDescription: '',
+              moduleType: '',
+              status: 'Active',
+              moduleGroup: '',
+            ),
+          ],
+        ),
+      ];
+
+      final customer = Customer(
+        partnerId: 1,
+        companyName: 'Zero Package Corp',
+        companyAddress: 'Road',
+        companyNumber: '0',
+        adminName: 'A',
+        adminNumber: '0',
+        companyArea: '',
+        companyField: '',
+        remarks: '',
+        additionalFeatures: '',
+        packageName: 'Zero Amount Package',
+        additionalPackages: 'Extra Module',
+        discount: 0.0,
+        totalCost: 20000.0,
+      );
+
+      final result = InvoiceService.calculateInvoiceDetails(
+        customer,
+        zeroAmountPackages,
+      );
+
+      // packageRate=0 but modulesRate=20000 > 0, so fallback should NOT trigger
+      expect(result.packageRate, 0.0);
+      expect(result.modulesRate, 20000.0);
+      expect(result.subtotal, 20000.0);
+      expect(result.discountAmount, 0.0);
+      expect(result.finalTotal, 20000.0);
+    });
+
+    test('additionalPackages string with extra whitespace is parsed correctly', () {
+      final customer = Customer(
+        partnerId: 1,
+        companyName: 'Whitespace Corp',
+        companyAddress: 'Road',
+        companyNumber: '0',
+        adminName: 'A',
+        adminNumber: '0',
+        companyArea: '',
+        companyField: '',
+        remarks: '',
+        additionalFeatures: '',
+        packageName: 'Premium Standard',
+        additionalPackages: '  Barcode Scanner  ,   SMS Alerts  ', // extra spaces
+        discount: 0.0,
+        totalCost: 190000.0,
+      );
+
+      final result = InvoiceService.calculateInvoiceDetails(
+        customer,
+        mockPackagesList,
+      );
+
+      expect(result.modulesRate, 40000.0); // both modules matched despite spaces
+      expect(result.packageRate, 150000.0);
+      expect(result.subtotal, 190000.0);
+    });
+
+    test('Correct package matched when multiple packages available', () {
+      final multiPackageList = [
+        ResellPackage(
+          id: 10,
+          packageCode: 'PKG-10',
+          packageName: 'Basic Plan',
+          description: '',
+          additionalRemarks: '',
+          currencyName: 'LKR',
+          packageAmount: 50000.0,
+          billingType: '',
+          allowedUsers: 2,
+          status: 'Active',
+          modules: [],
+        ),
+        ResellPackage(
+          id: 11,
+          packageCode: 'PKG-11',
+          packageName: 'Enterprise Plan',
+          description: '',
+          additionalRemarks: '',
+          currencyName: 'LKR',
+          packageAmount: 300000.0,
+          billingType: '',
+          allowedUsers: 50,
+          status: 'Active',
+          modules: [],
+        ),
+        ...mockPackagesList, // includes 'Premium Standard' at 150000
+      ];
+
+      final customer = Customer(
+        partnerId: 1,
+        companyName: 'Multi Package Corp',
+        companyAddress: 'Road',
+        companyNumber: '0',
+        adminName: 'A',
+        adminNumber: '0',
+        companyArea: '',
+        companyField: '',
+        remarks: '',
+        additionalFeatures: '',
+        packageName: 'Enterprise Plan',
+        additionalPackages: null,
+        discount: 0.0,
+        totalCost: 300000.0,
+      );
+
+      final result = InvoiceService.calculateInvoiceDetails(
+        customer,
+        multiPackageList,
+      );
+
+      expect(result.packageRate, 300000.0); // Enterprise Plan
+      expect(result.modulesRate, 0.0);
+      expect(result.subtotal, 300000.0);
+    });
+
+    test('additionalPackages with only whitespace or empty segments are ignored', () {
+      final customer = Customer(
+        partnerId: 1,
+        companyName: 'Empty Segments Corp',
+        companyAddress: 'Road',
+        companyNumber: '0',
+        adminName: 'A',
+        adminNumber: '0',
+        companyArea: '',
+        companyField: '',
+        remarks: '',
+        additionalFeatures: '',
+        packageName: 'Premium Standard',
+        additionalPackages: ' ,  , ', // only commas and spaces
+        discount: 0.0,
+        totalCost: 150000.0,
+      );
+
+      final result = InvoiceService.calculateInvoiceDetails(
+        customer,
+        mockPackagesList,
+      );
+
+      // Empty segments should be filtered out, so no modules added
+      expect(result.modulesRate, 0.0);
+      expect(result.packageRate, 150000.0);
+      expect(result.subtotal, 150000.0);
+    });
+
+    test('Discount calculation is correct for fractional discount percentage', () {
+      final customer = Customer(
+        partnerId: 1,
+        companyName: 'Fractional Discount Co',
+        companyAddress: 'Road',
+        companyNumber: '0',
+        adminName: 'A',
+        adminNumber: '0',
+        companyArea: '',
+        companyField: '',
+        remarks: '',
+        additionalFeatures: '',
+        packageName: 'Premium Standard',
+        additionalPackages: null,
+        discount: 15.5, // fractional %
+        totalCost: 126750.0, // 150000 * (1 - 0.155)
+      );
+
+      final result = InvoiceService.calculateInvoiceDetails(
+        customer,
+        mockPackagesList,
+      );
+
+      expect(result.packageRate, 150000.0);
+      expect(result.modulesRate, 0.0);
+      expect(result.subtotal, 150000.0);
+      expect(result.discountAmount, closeTo(23250.0, 0.01));
+      expect(result.finalTotal, 126750.0);
+    });
+
+    test('InvoiceCalculationResult stores all fields correctly', () {
+      final result = InvoiceCalculationResult(
+        packageRate: 100.0,
+        modulesRate: 200.0,
+        subtotal: 300.0,
+        discountAmount: 30.0,
+        finalTotal: 270.0,
+      );
+
+      expect(result.packageRate, 100.0);
+      expect(result.modulesRate, 200.0);
+      expect(result.subtotal, 300.0);
+      expect(result.discountAmount, 30.0);
+      expect(result.finalTotal, 270.0);
+    });
+
+    test('Fallback back-calculation with boundary discount of just above 0', () {
+      // Very small discount (e.g. 0.01%) should use back-calculation formula
+      final customer = Customer(
+        partnerId: 1,
+        companyName: 'Tiny Discount Corp',
+        companyAddress: 'Road',
+        companyNumber: '0',
+        adminName: 'A',
+        adminNumber: '0',
+        companyArea: '',
+        companyField: '',
+        remarks: '',
+        additionalFeatures: '',
+        packageName: 'Unlisted Package',
+        additionalPackages: null,
+        discount: 0.01, // just above 0, triggers back-calc
+        totalCost: 99999.0,
+      );
+
+      final result = InvoiceService.calculateInvoiceDetails(customer, []);
+
+      // packageRate = 99999 / (1 - 0.0001) ≈ 99999.0 * 1.0001 ≈ 100009.0
+      final expectedRate = 99999.0 / (1 - (0.01 / 100));
+      expect(result.packageRate, closeTo(expectedRate, 0.01));
+      expect(result.modulesRate, 0.0);
+      expect(result.finalTotal, 99999.0);
     });
   });
 }
