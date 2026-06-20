@@ -10,6 +10,11 @@
 #include <permission_handler_windows/permission_handler_windows_plugin.h>
 #include <printing/printing_plugin.h>
 
+/**
+ * @brief Registers the FirebaseCorePluginCApi, PermissionHandlerWindowsPlugin, and PrintingPlugin.
+ *
+ * @param registry The Flutter plugin registry.
+ */
 void RegisterPlugins(flutter::PluginRegistry* registry) {
   FirebaseCorePluginCApiRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("FirebaseCorePluginCApi"));
