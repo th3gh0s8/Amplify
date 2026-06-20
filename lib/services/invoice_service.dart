@@ -22,6 +22,63 @@ class InvoiceCalculationResult {
 }
 
 class InvoiceService {
+  static List<String> getIncludedFeatures(Customer customer) {
+    final List<String> features = [];
+
+    final pkg = customer.packageName?.toLowerCase() ?? '';
+    if (pkg.contains('website') ||
+        pkg.contains('commerce') ||
+        pkg.contains('e-commerce')) {
+      features.addAll([
+        'Online Storefront & Shopping Cart',
+        'Payment Gateway Integration',
+        'Real-time Product & Stock Synchronization',
+        'Customer Profile & Order History Portal',
+        'Admin Dashboard & Order Management',
+      ]);
+    } else {
+      features.addAll([
+        'Accounting (Profit & Loss, Trial Balance, Balance Sheet)',
+        'Stock Management',
+        'Credit Management',
+        'SMS Management',
+        'Profit Analysis',
+        'User credit with Privileges',
+        'Outstanding Monitoring & Reminding (CRM)',
+        'Business analysis with top sales item, customer and sales',
+      ]);
+    }
+
+    if (customer.additionalPackages != null &&
+        customer.additionalPackages!.isNotEmpty) {
+      final List<String> modules = customer.additionalPackages!
+          .split(',')
+          .map((m) => m.trim())
+          .where((m) => m.isNotEmpty)
+          .toList();
+      for (final module in modules) {
+        features.add('$module Module Integration');
+      }
+    }
+
+    if (customer.additionalFeatures.isNotEmpty) {
+      for (final line in customer.additionalFeatures.split('\n')) {
+        final trimmed = line.trim();
+        if (trimmed.isEmpty) continue;
+        if (trimmed.startsWith('PACKAGE:') ||
+            trimmed.startsWith('MODULES:') ||
+            trimmed.startsWith('TOTAL:')) {
+          continue;
+        }
+        if (!features.contains(trimmed)) {
+          features.add(trimmed);
+        }
+      }
+    }
+
+    return features;
+  }
+
   static InvoiceCalculationResult calculateInvoiceDetails(
     Customer customer,
     List<ResellPackage> availablePackages,
@@ -79,7 +136,6 @@ class InvoiceService {
     final double discountPercent = customer.discount ?? 0.0;
     final double finalTotal = customer.totalCost ?? 0.0;
 
-    // Fallback back-calculation if lookup fails or values are 0
     if (packageRate == 0.0 && modulesRate == 0.0) {
       if (discountPercent > 0 && discountPercent < 100) {
         packageRate = finalTotal / (1 - (discountPercent / 100));
@@ -116,6 +172,8 @@ class InvoiceService {
             .where((m) => m.isNotEmpty)
             .toList() ??
         [];
+
+    final dynamicFeatures = getIncludedFeatures(customer);
 
     final currencyFormatter = NumberFormat("#,##0.00", "en_LK");
     final dateFormatter = DateFormat("dd/MM/yyyy");
@@ -374,9 +432,21 @@ class InvoiceService {
                       children: [
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(6),
-                          child: pw.Text(
-                            'Additional Modules: ${customerModules.join(", ")}',
-                            style: const pw.TextStyle(fontSize: 9),
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(
+                                'Included Features:',
+                                style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold,
+                                  fontSize: 9,
+                                ),
+                              ),
+                              pw.SizedBox(height: 4),
+                              ...dynamicFeatures.map(
+                                (feature) => buildBulletPoint(feature),
+                              ),
+                            ],
                           ),
                         ),
                         pw.Padding(
@@ -452,29 +522,6 @@ class InvoiceService {
                   ),
                 ],
               ),
-              pw.SizedBox(height: 20),
-
-              pw.Text(
-                'Included Features:',
-                style: pw.TextStyle(
-                  fontWeight: pw.FontWeight.bold,
-                  fontSize: 9,
-                ),
-              ),
-              pw.SizedBox(height: 4),
-              buildBulletPoint(
-                'Accounting (Profit & Loss, Trial Balance, Balance Sheet)',
-              ),
-              buildBulletPoint('Stock Management'),
-              buildBulletPoint('Credit Management'),
-              buildBulletPoint('SMS Management'),
-              buildBulletPoint('Profit Analysis'),
-              buildBulletPoint('User credit with Privileges'),
-              buildBulletPoint('Outstanding Monitoring & Reminding (CRM)'),
-              buildBulletPoint(
-                'Business analysis with top sales item, customer and sales',
-              ),
-
               pw.SizedBox(height: 20),
 
               pw.Row(
