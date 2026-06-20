@@ -1,15 +1,16 @@
 import 'dart:convert';
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:file_picker/file_picker.dart';
 import '../models/customer.dart';
 import '../services/api_service.dart';
 import '../database/database_helper.dart';
 import '../widgets/system_overlay_wrapper.dart';
 import '../utils/format_utils.dart';
-import 'dart:async';
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
+import '../services/invoice_service.dart';
 
 class MyCustomersPage extends StatefulWidget {
   final String phoneNumber;
@@ -486,6 +487,51 @@ class _MyCustomersPageState extends State<MyCustomersPage> {
                         _buildDetailRow(
                           'Total',
                           FormatUtils.formatCurrency(client.totalCost ?? 0),
+                        ),
+
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 44,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.black,
+                              side: const BorderSide(color: Colors.black12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.description_outlined,
+                              size: 18,
+                            ),
+                            label: const Text(
+                              'GENERATE & SHARE INVOICE',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 11,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            onPressed: () async {
+                              try {
+                                final packages = await _apiService
+                                    .getPackages();
+                                await InvoiceService.generateAndShareInvoice(
+                                  client,
+                                  packages,
+                                );
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('INVOICE ERROR: $e'),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                          ),
                         ),
                         const SizedBox(height: 24),
                         _buildSectionTitle('ADDITIONAL DETAILS'),
