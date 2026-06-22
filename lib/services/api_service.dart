@@ -343,18 +343,24 @@ class ApiService {
       if (response.statusCode == 200) {
         try {
           final data = json.decode(response.body);
-          return data['success'] == true;
+          if (data['success'] == true) {
+            return true;
+          } else {
+            // Throw the exact error message returned from PHP
+            throw Exception(data['message'] ?? 'Customer registration failed');
+          }
         } catch (e) {
+          if (e is Exception) rethrow;
           print('DEBUG: JSON Parsing Error. Server returned: ${response.body}');
-          return false;
+          throw Exception('Invalid server response');
         }
       } else {
-        print('DEBUG: Server Error Response: ${response.statusCode}');
+        throw Exception('Server error: HTTP ${response.statusCode}');
       }
     } catch (e) {
       print('API Error (Add Customer): $e');
+      rethrow;
     }
-    return false;
   }
 
   Future<bool> updateFcmToken(String mobileNo, String token) async {
@@ -403,11 +409,18 @@ class ApiService {
       var response = await http.Response.fromStream(streamedResponse);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return data['success'] == true;
+        if (data['success'] == true) {
+          return true;
+        } else {
+          // Throw the exact error message returned from PHP
+          throw Exception(data['message'] ?? 'Upload failed');
+        }
+      } else {
+        throw Exception('Server error: HTTP ${response.statusCode}');
       }
     } catch (e) {
       print('API Error (Upload Payment Slip): $e');
+      rethrow;
     }
-    return false;
   }
 }
