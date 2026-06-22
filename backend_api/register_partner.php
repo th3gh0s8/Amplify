@@ -92,11 +92,10 @@ try {
                 "success" => true,
                 "message" => "Partner registered and OTP generated",
                 "data" => $partner_data,
-                "debug_otp" => $otp
             ]);
         } else {
             echo json_encode([
-                "success" => true, 
+                "success" => true,
                 "message" => "Registration successful but failed to save OTP",
                 "data" => $partner_data,
                 "error" => $conn->error

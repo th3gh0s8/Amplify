@@ -7,9 +7,10 @@ if (file_exists('db/db_config.php')) {
     require_once 'db_config.php';
 }
 
+// FIX 1: Change directory permissions from 0777 (dangerous) to 0755 (secure)
 $uploadDir = 'uploads/payment_slips/';
 if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0777, true);
+    mkdir($uploadDir, 0755, true);
 }
 
 // 1. Get the Partner ID or Mobile No
@@ -33,17 +34,46 @@ if (!empty($partner_mobile)) {
     die(json_encode(['success' => false, 'message' => 'Partner identifier empty']));
 }
 
-// 2. Handle File Upload
+// 2. Handle File Upload (SECURED)
 $file_path = "";
-if (isset($_FILES['payment_slip'])) {
+// Check if file exists and there are no upload errors at the server level
+if (isset($_FILES['payment_slip']) && $_FILES['payment_slip']['error'] === UPLOAD_ERR_OK) {
     $file = $_FILES['payment_slip'];
-    $file_name = time() . '_' . basename($file['name']);
-    $target_file = $uploadDir . $file_name;
+    $file_tmp = $file['tmp_name'];
+    $original_name = $file['name'];
+    $file_size = $file['size'];
 
-    if (move_uploaded_file($file['tmp_name'], $target_file)) {
+    // FIX 2: Enforce a maximum file size (e.g., 5MB)
+    $max_size = 5 * 1024 * 1024;
+    if ($file_size > $max_size) {
+        die(json_encode(['success' => false, 'message' => 'File exceeds maximum size of 5MB']));
+    }
+
+    // FIX 3: Validate File Extension
+    $allowed_extensions = ['jpg', 'jpeg', 'png', 'pdf'];
+    $file_ext = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+    if (!in_array($file_ext, $allowed_extensions)) {
+        die(json_encode(['success' => false, 'message' => 'Invalid file type. Only JPG, PNG, and PDF are allowed.']));
+    }
+
+    // FIX 4: Validate MIME Type (prevents attackers from faking extensions)
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $file_mime = finfo_file($finfo, $file_tmp);
+    finfo_close($finfo);
+
+    $allowed_mimes = ['image/jpeg', 'image/png', 'application/pdf'];
+    if (!in_array($file_mime, $allowed_mimes)) {
+        die(json_encode(['success' => false, 'message' => 'Invalid file content.']));
+    }
+
+    // FIX 5: Generate a completely random filename
+    $safe_filename = bin2hex(random_bytes(16)) . '.' . $file_ext;
+    $target_file = $uploadDir . $safe_filename;
+
+    if (move_uploaded_file($file_tmp, $target_file)) {
         $file_path = $target_file;
     } else {
-        die(json_encode(['success' => false, 'message' => 'Failed to move uploaded file']));
+        die(json_encode(['success' => false, 'message' => 'Failed to save the uploaded file']));
     }
 }
 
@@ -67,20 +97,23 @@ $total_cost = $_POST['total_cost'] ?? 0;
 $status = 'Pending';
 $rDateTime = date('Y-m-d H:i:s');
 
-  $sql = "INSERT INTO new_clients (partnerTb, com_name, com_address, com_number, admin_name, admin_number,
-  com_area, com_field, remarks, additional_features, status, rDateTime, reference, preferred_lang,
-  package_name, additional_packages, discount, total_cost, payment_slip)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+$sql = "INSERT INTO new_clients (partnerTb, com_name, com_address, com_number, admin_name, admin_number,
+com_area, com_field, remarks, additional_features, status, rDateTime, reference, preferred_lang,
+package_name, additional_packages, discount, total_cost, payment_slip)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("sssssssssssssssssss", $partner_identifier, $com_name, $com_address, $com_number,
-  $admin_name, $admin_number, $com_area, $com_field, $remarks, $additional_features, $status, $rDateTime,
-  $reference, $preferred_lang, $package_name, $additional_packages, $discount, $total_cost, $file_path);
+$admin_name, $admin_number, $com_area, $com_field, $remarks, $additional_features, $status, $rDateTime,
+$reference, $preferred_lang, $package_name, $additional_packages, $discount, $total_cost, $file_path);
 
 if ($stmt->execute()) {
     echo json_encode(['success' => true, 'message' => 'Customer registered successfully']);
 } else {
-    echo json_encode(['success' => false, 'message' => 'Database error: ' . $stmt->error]);
+    // FIX 6: Do not leak raw database errors ($stmt->error) to the user. Log them instead.
+    error_log("DB error on add_customer: " . $stmt->error);
+    echo json_encode(['success' => false, 'message' => 'Database update failed.']);
 }
 
+$stmt->close();
 $conn->close();
 ?>

@@ -45,7 +45,7 @@ if (isset($_GET['delete'])) {
 </div>
 
 <?php if(isset($_GET['msg'])): ?>
-    <div class="alert alert-success">Invoice <?php echo $_GET['msg']; ?> successfully!</div>
+    <div class="alert alert-success">Invoice <?php echo htmlspecialchars($_GET['msg'], ENT_QUOTES, 'UTF-8'); ?> successfully!</div>
 <?php endif; ?>
 
 <!-- Top Scroller -->

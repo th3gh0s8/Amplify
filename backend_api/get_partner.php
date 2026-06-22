@@ -48,7 +48,6 @@ try {
             echo json_encode([
                 "success" => true,
                 "data" => $partner,
-                "debug_otp" => $otp
             ]);
         } else {
             echo json_encode(["success" => false, "message" => "Database error: " . $conn->error]);

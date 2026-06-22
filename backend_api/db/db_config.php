@@ -1,7 +1,7 @@
 <?php
 // 1. Point to where your .env file is located.
 // (Move it outside public_html if possible, e.g., __DIR__ . '/../../.env')
-$env_path = __DIR__ . './.env';
+$env_path = __DIR__ . '/.env';
 
 // 2. Read the file natively without plugins
 if (!file_exists($env_path)) {
