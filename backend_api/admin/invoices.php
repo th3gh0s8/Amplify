@@ -2,7 +2,12 @@
 
 <?php
 $sort = $_GET['sort'] ?? 'ID';
-$order = $_GET['order'] ?? 'DESC';
+$order = strtoupper($_GET['order'] ?? 'DESC');
+
+// SECURE: Strictly validate $order to prevent SQL Injection
+if ($order !== 'ASC' && $order !== 'DESC') {
+    $order = 'DESC';
+}
 
 // Fetch all column names for sorting validation and headers
 $result_meta = $conn->query("SELECT * FROM invoices LIMIT 1");
@@ -19,8 +24,14 @@ $sql = "SELECT * FROM invoices ORDER BY $sort $order";
 $result = $conn->query($sql);
 
 if (isset($_GET['delete'])) {
-    $id = (int)$_GET['delete'];
-    $conn->query("DELETE FROM invoices WHERE ID = $id");
+    $id = $_GET['delete'];
+
+    // SECURE: Use a prepared statement for the deletion
+    $stmt = $conn->prepare("DELETE FROM invoices WHERE ID = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $stmt->close();
+
     header("Location: invoices.php?msg=deleted");
     exit;
 }
@@ -49,9 +60,9 @@ if (isset($_GET['delete'])) {
                 <?php foreach ($fields as $field): ?>
                     <th class="text-nowrap">
                         <a href="?sort=<?php echo $field->name; ?>&order=<?php echo $next_order; ?>" class="text-white text-decoration-none">
-                            <?php 
+                            <?php
                                 $label = str_replace(['_', 'Tb', 'id'], [' ', ' Table', ' ID'], $field->name);
-                                echo ucwords($label); 
+                                echo ucwords($label);
                             ?>
                             <?php if ($sort == $field->name): ?>
                                 <i class="bi bi-caret-<?php echo ($order == 'ASC') ? 'up' : 'down'; ?>-fill"></i>
@@ -68,7 +79,7 @@ if (isset($_GET['delete'])) {
                 <tr>
                     <?php foreach ($fields as $field): ?>
                         <td>
-                            <?php 
+                            <?php
                                 $val = $row[$field->name];
                                 if (in_array($field->name, ['value', 'com_amount', 'paid', 'balance'])) {
                                     echo "LKR " . number_format((float)$val, 2);

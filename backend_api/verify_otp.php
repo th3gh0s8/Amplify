@@ -63,24 +63,27 @@ try {
             "partner_id" => $partner_id
         ]);
     } else {
-        // 5. DETAILED FAILURE LOGIC (For debugging)
+// 5. DETAILED FAILURE LOGIC (Patched SQL Injection)
         $msg = "Invalid or expired code";
 
-        // Check if the code exists but is expired (status 1)
-        $check_exp = $conn->query("SELECT status FROM web_codes WHERE (u_Id = '$id_str' OR u_Id = '$no_zero') AND otp_code = '$otp_code' LIMIT 1");
+        // Secure Prepared Statement to prevent SQL Injection
+        $stmtExp = $conn->prepare("SELECT status FROM web_codes WHERE (u_Id = ? OR u_Id = ?) AND otp_code = ? LIMIT 1");
+        $stmtExp->bind_param("sss", $id_str, $no_zero, $otp_code);
+        $stmtExp->execute();
+        $check_exp = $stmtExp->get_result();
+
         if ($check_exp && $check_exp->num_rows > 0) {
             $exp_row = $check_exp->fetch_assoc();
-            if ($exp_row['status'] == 1) $msg = "This code has already been used or has expired.";
+            if ($exp_row['status'] == 1) {
+                $msg = "This code has already been used or has expired.";
+            }
         }
+        $stmtExp->close();
 
+        // Send response without leaking internal database IDs
         echo json_encode([
             "success" => false,
-            "message" => $msg,
-            "debug" => [
-                "tried_id" => $partner_id,
-                "tried_mobile" => $no_zero,
-                "tried_code" => $otp_code
-            ]
+            "message" => $msg
         ]);
     }
 } catch (Exception $e) {

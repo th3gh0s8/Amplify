@@ -21,7 +21,12 @@ if (isset($_GET["activate"])) {
 }
 
 $sort = $_GET["sort"] ?? "ID";
-$order = $_GET["order"] ?? "DESC";
+$order = strtoupper($_GET["order"] ?? "DESC");
+
+// SECURE: Strictly validate $order to prevent SQL Injection
+if ($order !== "ASC" && $order !== "DESC") {
+    $order = "DESC";
+}
 
 // Fetch all column names for sorting validation and headers
 $result_meta = $conn->query("SELECT * FROM new_clients LIMIT 1");
