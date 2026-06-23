@@ -17,13 +17,21 @@ function sendEnterpriseEmail($toEmail, $toName)
     try {
         // --- Server settings ---
         $mail->isSMTP();                                      // Tell PHPMailer to use SMTP
-        $mail->Host       = 'smtp.your-enterprise.com';       // Set the SMTP server to send through
+        $mail->Host       = 'mail.powersoftt.com';       // Set the SMTP server to send through
         $mail->SMTPAuth   = true;                             // Enable SMTP authentication
         $mail->Username   = 'your_email@enterprise.com';      // SMTP username
         $mail->Password   = 'your_email_password';            // SMTP password
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;   // Enable TLS encryption (or ENCRYPTION_SMTPS for port 465)
         $mail->Port       = 587;                              // TCP port to connect to
 
+        // Bypass SSL certificate verification
+        /* 'ssl' => array(
+            $mail->SMTPOptions = array(
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            )
+        ); */
         // --- Recipients ---
         $mail->setFrom('noreply@enterprise.com', 'Enterprise System');
         $mail->addAddress($toEmail, $toName);                 // Add a recipient
