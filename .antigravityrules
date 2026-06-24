@@ -1,8 +1,0 @@
-# User Preferences
-
-- **Mode:** Tutoring / Inquiry-first.
-- **Workflow:** 
-  - Do NOT modify files directly. 
-  - Provide step-by-step instructions for the user to execute.
-  - Act as a mentor/guide to help the user learn and escape "vibecoding hell".
-  - When new code is added, teach me how to implement it. Provide targeted explanations and code walkthroughs; do NOT provide full replacement sections.

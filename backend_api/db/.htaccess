@@ -1,5 +1,0 @@
-# Block public access to .env and .ini files
-<FilesMatch "\.(env|ini)$">
-    Order allow,deny
-    Deny from all
-</FilesMatch>
